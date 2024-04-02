@@ -1,0 +1,56 @@
+-- !! seleziona un elemento in una certa posizione
+(my!!) _ [] = 0
+(my!!) 0 (x:xs) = x
+(my!!) n (x:xs) 
+    | n < 0 = 1 
+    | otherwise = (my!!) (n-1) xs
+
+-- take prende la prima parte di una lista
+(myTake) _ [] = []
+(myTake) 1 (x:xs) = [x]
+(myTake) n (x:xs)
+    | n < 0 = []
+    | otherwise = x : (myTake) (n-1) xs
+
+-- drop la seconda
+(myDrop) _ [] = []
+(myDrop) 1 (x:xs) = xs
+(myDrop) n (x:xs)
+    | n < 0 = []
+    | otherwise = ((myDrop) (n-1) xs )
+
+-- splitAt fa una coppia con prima e seconda parte
+(mySplit) 2 xs = ((myTake) 2 xs, (myDrop) 2 xs)
+
+(prefissi) [] = [[]]
+(prefissi) xs@(x:txs) = []: map(x:) (prefissi txs)
+
+main :: IO ()
+main = do
+    let lista = [1, 2, 3]
+    putStrLn "Lista originale:"
+    print lista
+    print (prefissi lista) 
+
+
+map' :: (a -> b) -> [a] -> [b]
+map' f = foldr (\x -> (:) (f x)) []
+
+main :: IO ()
+main = do
+    putStrLn "Benvenuto nel mio programma Haskell!"
+    let risultato = map' (\x->x^2) [1,2,3,4,5]
+    print risultato
+
+-- take con parallelOr
+take :: Int -> [a] -> [a]
+take n xs | n <= 0    = pOr (if null xs then [] else take 0 xs) xs
+          | otherwise = case xs of
+                          []     -> []
+                          (y:ys) -> y : take (n - 1) ys
+
+-- Definire pIf che soddisfa pIf undefined v v = v usando parallelOr. E viceversa.
+pIf condizione valore1 valore2 =
+    condizione `par` (if condizione then valore2 else valore1)
+
+parallelOr x y = pIf x True (pIf y True False)
