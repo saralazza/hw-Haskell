@@ -96,6 +96,22 @@ sbilanciamentoBT' tree = abs(sx-dx) where
     sx = fst ris
     dx = snd ris
 
+-- Esercizio 2.3: Gli alberi a branching illimitato si possono facilmente definire in Haskell come segue: data Tree a = R a [Tree a]. Come ai punti precedenti, scrivendo i funzionali mapT, foldrT e foldlT.
+data Tree a = R a [Tree a] deriving (Show)
+
+ttree :: Tree Int
+ttree = R 1 [
+            R 2 [
+                R 4 [],
+                R 5 []
+            ],
+            R 3 [
+                R 6 [],
+                R 7 []
+            ]
+        ]
+mapT f (R x xs) = R (f x) (map (mapT f) xs)
+
 -- Esercizio 3: Scrivere una funzione nodiEquilibrati :: Num a ⇒ BinTree a → [a] che preso in input un albero, restituisce la lista (eventualmente vuota) contenente tutti i valori nei nodi equilibrati. Valutare la complessita` della funzione.
 -- Soluzione: La complessità di questa funzione è data T(n) = 2T(n/2) + O(n) che è O(n logn)
 
@@ -170,5 +186,5 @@ myScanr f e (x:xs) = f x (head ys): ys where
 
 main :: IO ()
 main = do
-    let ris = mergeSort' [1,2,3,4,5]
+    let ris = mapT (\x -> x^2) ttree
     print ris
