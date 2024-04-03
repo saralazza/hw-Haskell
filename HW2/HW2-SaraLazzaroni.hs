@@ -19,15 +19,16 @@ mergeIterativo xs@(x:txs) = mergeIterativo(mergeCoppie xs)
 mergeSort xs = mergeIterativo $ listaDiListe xs
 
 -- Esercizio 1.2: Accelerare la prima fase di questo algoritmo per trarre vantaggio da input “favorevoli”. La migliorıa dovrebbe assicurare un comportamento lineare in casi particolarmente fortunati.
--- TODO: cambiare i nomi
-listifyAux [x] = ([], [x])
-listifyAux (x:xs) = if x < head last then (out, x : last) else (last : out, [x])
-    where (out, last) = listifyAux xs
+listaDiListeAux [x] = ([], [x])
+listaDiListeAux (x:xs)
+    | x < head lxs = (xss, x : lxs)
+    | otherwise = (lxs : xss, [x])
+    where (xss, lxs) = listaDiListeAux xs
 
-listify xs = last : out
-    where (out, last) = listifyAux xs
+listaDiListe' xs = (snd xss) : (fst xss)
+    where xss = listaDiListeAux xs
     
-mergeSort' xs = mergeIterativo $ listify xs
+mergeSort' xs = mergeIterativo $ listaDiListe' xs
 
 -- Esercizio 2.1: Scrivere i funzionali mapBT, mapBT’, foldrBT, foldrBT’, foldlBT, e foldlBT’ che generalizzano agli alberi BinTree e BinTree’ gli analoghi funzio- nali map, foldr e foldl sulle liste. Riflettete accuratamente sui tipi che devono avere e su quali siano, di fatto, i principi di ricorsione sugli alberi binari.
 data BinTree a = Node a (BinTree a) (BinTree a) | Empty
@@ -169,5 +170,5 @@ myScanr f e (x:xs) = f x (head ys): ys where
 
 main :: IO ()
 main = do
-    let ris = sbilanciamentoBT' ((Node' (Node' (Node' (Leaf 1) (Leaf 2)) (Leaf 3)) (Node' (Node' (Leaf 4) (Leaf 5)) (Node' (Node' (Leaf 6) (Node' (Leaf 7) (Node' (Leaf 8) (Leaf 9)))) (Leaf 10)))))
+    let ris = mergeSort' [1,2,3,4,5]
     print ris
