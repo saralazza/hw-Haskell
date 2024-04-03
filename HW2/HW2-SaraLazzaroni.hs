@@ -102,7 +102,7 @@ data Tree a = R a [Tree a] deriving (Show)
 ttree :: Tree Int
 ttree = R 1 [
             R 2 [
-                R 4 [],
+                R 4 [ R 8 []],
                 R 5 []
             ],
             R 3 [
@@ -119,7 +119,7 @@ foldlT f v (R x xs) = foldl (\acc st -> foldlT f acc st) (f v x) xs
 
 numNodiT tree = foldrT (\x acc -> acc +1) 0 (+) tree
 
-hAlberoT tree = foldrT (\_ acc -> succ acc) 0 (\x y -> max x y) tree
+hAlberoT tree = foldrT (\_ acc -> succ acc) (-1) (\x y -> max x y) tree
 
 -- Esercizio 3: Scrivere una funzione nodiEquilibrati :: Num a ⇒ BinTree a → [a] che preso in input un albero, restituisce la lista (eventualmente vuota) contenente tutti i valori nei nodi equilibrati. Valutare la complessita` della funzione.
 -- Soluzione: La complessità di questa funzione è data T(n) = 2T(n/2) + O(n) che è O(n logn)
@@ -195,5 +195,5 @@ myScanr f e (x:xs) = f x (head ys): ys where
 
 main :: IO ()
 main = do
-    let ris =  numNodiT ttree
+    let ris =  hAlberoT ttree
     print ris
