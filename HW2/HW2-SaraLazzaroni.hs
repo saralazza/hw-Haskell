@@ -112,6 +112,14 @@ ttree = R 1 [
         ]
 mapT f (R x xs) = R (f x) (map (mapT f) xs)
 
+foldrT f v (R x xs) = f x (foldr (\st acc -> foldrT f acc st) v xs)
+
+foldlT f v (R x xs) = foldl (\acc st -> foldlT f acc st) (f v x) xs
+
+numNodiT tree = foldrT (\x acc -> acc +1) 0 tree
+
+-- hAlberoT tree = foldrT (\x acc -> acc +1) (-1) tree
+
 -- Esercizio 3: Scrivere una funzione nodiEquilibrati :: Num a ⇒ BinTree a → [a] che preso in input un albero, restituisce la lista (eventualmente vuota) contenente tutti i valori nei nodi equilibrati. Valutare la complessita` della funzione.
 -- Soluzione: La complessità di questa funzione è data T(n) = 2T(n/2) + O(n) che è O(n logn)
 
@@ -186,5 +194,5 @@ myScanr f e (x:xs) = f x (head ys): ys where
 
 main :: IO ()
 main = do
-    let ris = mapT (\x -> x^2) ttree
+    let ris = numNodiT ttree
     print ris
