@@ -1,34 +1,40 @@
 import Data.List
 --Esercizio 1.1: Definire una funzione Haskell che segue la seguente idea bottom-up per implementare l’algoritmo mergeSort: Data una lista xs, creare una lista di liste lunghe 1, ciascuna contenente un elemento di xs, poi fondere a due a due le liste ordinate (eventualmente lasciando inalterata l’ultima lista quando il numero delle liste `e dispari), finch`e non rimane un’unica lista ordinata.
+listaDiListe :: [a] -> [[a]]
 listaDiListe [] = []
 listaDiListe (x:xs) = [x] : listaDiListe xs
 
+merge :: Ord a => [a] -> [a] -> [a]
 merge [] ys = ys
 merge xs [] = xs
 merge xs@(x:txs) ys@(y:tys) 
     | x<=y = x : (merge txs ys)
     | otherwise =  y: (merge xs tys)
-    
+
+mergeCoppie :: Ord a => [[a]] -> [[a]]
 mergeCoppie [] = []
 mergeCoppie [xs] = [xs]
 mergeCoppie (x:y:xs) = (merge x y) : mergeCoppie xs
 
+mergeIterativo :: Ord a => [[a]] -> [a]
 mergeIterativo [xs] = xs
 mergeIterativo xs@(x:txs) = mergeIterativo(mergeCoppie xs)
 
-mergeSort xs = mergeIterativo $ listaDiListe xs
+mergeSort :: Ord a => [a] -> [a]
+mergeSort = mergeIterativo . listaDiListe 
 
 -- Esercizio 1.2: Accelerare la prima fase di questo algoritmo per trarre vantaggio da input “favorevoli”. La migliorıa dovrebbe assicurare un comportamento lineare in casi particolarmente fortunati.
-listaDiListeAux [x] = ([], [x])
-listaDiListeAux (x:xs)
-    | x < head lxs = (xss, x : lxs)
-    | otherwise = (lxs : xss, [x])
-    where (xss, lxs) = listaDiListeAux xs
-
-listaDiListe' xs = (snd xss) : (fst xss)
-    where xss = listaDiListeAux xs
+listaDiListe' :: Ord a => [a] -> [[a]]
+listaDiListe' xs = (snd xss) : (fst xss)where 
+    xss = listaDiListeAux xs
+    listaDiListeAux [x] = ([], [x])
+    listaDiListeAux (x:xs)
+        | x < head lxs = (xss, x : lxs)
+        | otherwise = (lxs : xss, [x])
+        where (xss, lxs) = listaDiListeAux xs
     
-mergeSort' xs = mergeIterativo $ listaDiListe' xs
+mergeSort' :: Ord a => [a] -> [a]
+mergeSort' = mergeIterativo . listaDiListe'
 
 -- Esercizio 2.1: Scrivere i funzionali mapBT, mapBT’, foldrBT, foldrBT’, foldlBT, e foldlBT’ che generalizzano agli alberi BinTree e BinTree’ gli analoghi funzio- nali map, foldr e foldl sulle liste. Riflettete accuratamente sui tipi che devono avere e su quali siano, di fatto, i principi di ricorsione sugli alberi binari.
 data BinTree a = Node a (BinTree a) (BinTree a) | Empty
@@ -51,7 +57,7 @@ tree' =
     Node'
         (Node' (Leaf 5) (Node' (Leaf 6) (Leaf 7)))
         (Leaf 9)
-    
+
 mapBT f Empty = Empty
 mapBT f (Node x sx dx) = Node (f x) (mapBT f sx) (mapBT f dx)
 
@@ -68,7 +74,7 @@ foldrBT' f g v (Node' sx dx) = f (foldrBT' f g v sx) (foldrBT' f g v dx)
 foldlBT f v Empty = v
 foldlBT f v (Node x sx dx) =  foldlBT f left dx where
     left = foldlBT f (f v x) sx
-    
+
 foldlBT' f g v (Leaf x) = g x v
 foldlBT' f g v (Node' sx dx) = foldlBT' f g ( f (foldlBT' f g v sx)) dx
 
@@ -134,7 +140,7 @@ cercaNodiEquilibrati sum (Node x sx dx)
 
 equilibrato sum sumSottoAlbero = sum == sumSottoAlbero
 
-nodiEquilibrati tree = fst (cercaNodiEquilibrati 0 tree)
+nodiEquilibrati = fst . cercaNodiEquilibrati 0 
 
 -- Esercizio 4: Scrivere una funzione Haskell listToABR :: Ord a ⇒ [a] → BinTree a che sistema i valori di una lista in un albero binario di ricerca. Determinare la complessita` della funzione e chiedersi se si tratta di una complessita` ottima rispetto al problema.
 -- Soluzione: La complessità di questa funzione è rappresentata da questa equazione di ricorrenza T(n) = 2T(n/2) + O(n) che è O(n logn)
@@ -195,5 +201,5 @@ myScanr f e (x:xs) = f x (head ys): ys where
 
 main :: IO ()
 main = do
-    let ris =  hAlberoT ttree
+    let ris =  nodiEquilibrati (Node 7 (Node 5 (Node 1 Empty Empty) (Node 1 Empty Empty)) (Node 3 (Node 4 Empty Empty) Empty))
     print ris
