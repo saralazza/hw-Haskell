@@ -75,7 +75,7 @@ foldlBT f v Empty = v
 foldlBT f v (Node x sx dx) =  foldlBT f left dx where
     left = foldlBT f (f v x) sx
 
-foldlBT' f g v (Leaf x) = g x v
+foldlBT' f g v (Leaf x) = g v x
 foldlBT' f g v (Node' sx dx) = foldlBT' f g ( f (foldlBT' f g v sx)) dx
 
 -- Esercizio 2.2: Scrivere poi le seguenti funzioni usando foldrBT e foldrBT’ (cercare di ottenere algoritmi lineari nel numero dei nodi): (a) numero dei nodi di un albero binario; (b) altezza dell’albero (= lunghezza in numero di archi del piu` lungo cammino radice-foglia); (c) massimo indice di sbilanciamento (= massima differenza tra altezza sotto-albero destro/sinistro)
@@ -125,10 +125,12 @@ foldlT f v (R x xs) = foldl (\acc st -> foldlT f acc st) (f v x) xs
 
 numNodiT tree = foldrT (\x acc -> acc +1) 0 (+) tree
 
-hAlberoT tree = foldrT (\_ acc -> succ acc) (-1) (\x y -> max x y) tree
+hAlberoT tree = foldrT (\_ acc -> acc + 1) (-1) (\x y -> max x y) tree
+
+-- L'indice di sbilanciamento non è definito su alberi non binari
 
 -- Esercizio 3: Scrivere una funzione nodiEquilibrati :: Num a ⇒ BinTree a → [a] che preso in input un albero, restituisce la lista (eventualmente vuota) contenente tutti i valori nei nodi equilibrati. Valutare la complessita` della funzione.
--- Soluzione: La complessità di questa funzione è data T(n) = 2T(n/2) + O(n) che è O(n logn)
+-- Soluzione: La complessità di questa funzione è data T(n) = T(k) + T(n-k-1) + O(n) che è O(n logn)
 
 cercaNodiEquilibrati _ Empty = ([], 0)
 cercaNodiEquilibrati sum (Node x sx dx)
@@ -143,7 +145,7 @@ equilibrato sum sumSottoAlbero = sum == sumSottoAlbero
 nodiEquilibrati = fst . cercaNodiEquilibrati 0 
 
 -- Esercizio 4: Scrivere una funzione Haskell listToABR :: Ord a ⇒ [a] → BinTree a che sistema i valori di una lista in un albero binario di ricerca. Determinare la complessita` della funzione e chiedersi se si tratta di una complessita` ottima rispetto al problema.
--- Soluzione: La complessità di questa funzione è rappresentata da questa equazione di ricorrenza T(n) = 2T(n/2) + O(n) che è O(n logn)
+-- Soluzione: La complessità di questa funzione è rappresentata da questa equazione di ricorrenza T(n) = 2T(n/2) + O(n) che è O(n logn). Si secondo me questo è il costo computazionale ottimo rispetto al problema perchè la minima altezza che un albero può avere è O(logn), che viene ottenuta se l'albero è bilanciato.
 listToABR :: Ord a => [a] -> BinTree a
 listToABR xs = listToABR' (length xs) (sort xs)
 
@@ -201,5 +203,5 @@ myScanr f e (x:xs) = f x (head ys): ys where
 
 main :: IO ()
 main = do
-    let ris =  nodiEquilibrati (Node 7 (Node 5 (Node 1 Empty Empty) (Node 1 Empty Empty)) (Node 3 (Node 4 Empty Empty) Empty))
+    let ris =  sbilanciamentoT ttree
     print ris
