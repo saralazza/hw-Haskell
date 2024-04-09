@@ -118,8 +118,12 @@ ttree = R 1 [
         ]
 mapT f (R x xs) = R (f x) (map (mapT f) xs)
 
+foldr' f acc [x] = x
+foldr' f acc [] = acc
+foldr' f acc (x:xs) = f x (foldr' f acc xs)
+
 foldrT :: (a -> b -> b) -> b -> (b -> b -> b) -> Tree a -> b
-foldrT f b g (R x xs) = f x (foldr g b (map (foldrT f b g) xs))
+foldrT f b g (R x xs) = f x (foldr' g b (map (foldrT f b g) xs))
 
 foldlT f v (R x xs) = foldl (\acc st -> foldlT f acc st) (f v x) xs
 
@@ -127,7 +131,12 @@ numNodiT tree = foldrT (\x acc -> acc +1) 0 (+) tree
 
 hAlberoT tree = foldrT (\_ acc -> acc + 1) (-1) (\x y -> max x y) tree
 
--- L'indice di sbilanciamento non è definito su alberi non binari
+sbilanciamentoAuxT (hmin, hmax) (amin, amax) = (min hmin amin, max hmax amax)
+
+sbilanciamentoT tree = massimo - minimo where 
+    ris = foldrT (\x (amin, amax) -> (1 + amin, 1 + amax)) (-1, -1) (sbilanciamentoAuxT) tree
+    minimo = fst ris
+    massimo = snd ris
 
 -- Esercizio 3: Scrivere una funzione nodiEquilibrati :: Num a ⇒ BinTree a → [a] che preso in input un albero, restituisce la lista (eventualmente vuota) contenente tutti i valori nei nodi equilibrati. Valutare la complessita` della funzione.
 -- Soluzione: La complessità di questa funzione è data T(n) = T(n-k-1) + T(k) + O(n) che è O(n logn)
@@ -204,5 +213,5 @@ myScanr f e (x:xs) = f x (head ys): ys where
 
 main :: IO ()
 main = do
-    let ris =  sbilanciamentoT ttree
+    let ris =  sbilanciamentoT (R 1 [R 2 [ R 3 [] ], R 4 []])
     print ris
