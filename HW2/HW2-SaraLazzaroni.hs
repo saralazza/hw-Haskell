@@ -156,8 +156,17 @@ nodiEquilibrati = fst . cercaNodiEquilibrati 0
 -- Esercizio 4: Scrivere una funzione Haskell listToABR :: Ord a ⇒ [a] → BinTree a che sistema i valori di una lista in un albero binario di ricerca. Determinare la complessita` della funzione e chiedersi se si tratta di una complessita` ottima rispetto al problema.
 -- Soluzione: La complessità di questa funzione è rappresentata da questa equazione di ricorrenza T(n) = 2T(n/2) + O(n) che è O(n logn). Si secondo me questo è il costo computazionale ottimo rispetto al problema perchè la minima altezza che un albero può avere è O(logn), che viene ottenuta se l'albero è bilanciato. 
 --              Il bilanciamento dell'albero viene realizzato andando a dividere la lista in due sottoliste di uguale dimensione.
+
+-- Rimuovo i duplicati dalla lista perchè la definizione di ABR non prevede la presenza di elementi duplicati all'interno dell'albero
+myRemoveDupsOrd [] = []
+myRemoveDupsOrd [x] = [x]
+myRemoveDupsOrd (x:y:xs) 
+    | x == y = myRemoveDupsOrd (x:xs)
+    | otherwise = x : myRemoveDupsOrd (y:xs)
+
 listToABR :: Ord a => [a] -> BinTree a
-listToABR xs = listToABR' (length xs) (sort xs)
+listToABR xs = listToABR' (length l) l where
+    l = myRemoveDupsOrd (sort xs)
 
 listToABR' _ [] = Empty
 listToABR' _ [x] = Node x Empty Empty
@@ -213,5 +222,5 @@ myScanr f e (x:xs) = f x (head ys): ys where
 
 main :: IO ()
 main = do
-    let ris =  sbilanciamentoT (R 1 [R 2 [ R 3 [] ], R 4 []])
+    let ris =  listToABR [10,3,2,1,4,6,2,11,5,7]
     print ris
