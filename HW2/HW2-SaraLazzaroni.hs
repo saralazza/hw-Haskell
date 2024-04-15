@@ -42,21 +42,6 @@ data BinTree a = Node a (BinTree a) (BinTree a) | Empty
     
 data BinTree' a = Node' (BinTree' a) (BinTree' a) | Leaf a
     deriving (Show)
-    
--- Albero di esempio
-exampleTree :: BinTree Int
-exampleTree =
-    Node 1
-        (Node 2 Empty Empty)
-        (Node 3
-            (Node 4 Empty Empty)
-            (Node 5 (Node 6 Empty (Node 7 Empty (Node 8 Empty Empty)))Empty) )
-
-tree' :: BinTree' Int
-tree' =
-    Node'
-        (Node' (Leaf 5) (Node' (Leaf 6) (Leaf 7)))
-        (Leaf 9)
 
 mapBT f Empty = Empty
 mapBT f (Node x sx dx) = Node (f x) (mapBT f sx) (mapBT f dx)
@@ -105,17 +90,6 @@ sbilanciamentoBT' tree = abs(sx-dx) where
 -- Esercizio 2.3: Gli alberi a branching illimitato si possono facilmente definire in Haskell come segue: data Tree a = R a [Tree a]. Come ai punti precedenti, scrivendo i funzionali mapT, foldrT e foldlT.
 data Tree a = R a [Tree a] deriving (Show)
 
-ttree :: Tree Int
-ttree = R 1 [
-            R 2 [
-                R 4 [ R 8 []],
-                R 5 []
-            ],
-            R 3 [
-                R 6 [],
-                R 7 []
-            ]
-        ]
 mapT f (R x xs) = R (f x) (map (mapT f) xs)
 
 foldr' f acc [x] = x
