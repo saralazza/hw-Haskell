@@ -12,7 +12,7 @@ luckyNumbers = luckyAux (filter odd [3..])
 
 main :: IO ()
 main = do
-    let ris = take 20 luckyNumbers
+    let ris = take 57 luckyNumbers
     print ris
 
 {-
