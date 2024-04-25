@@ -13,6 +13,19 @@ luckyAux xs = 1 : filterL 3 xs where
 
 luckyNumbers = luckyAux (filter odd [3..])
 
+-- Esercizio 1D.1: Scrivere in Haskell il funzionale primRec che definisce la ricorsione primitiva
+primRec h g 0 = g
+primRec h g n = h (n-1) (primRec h g (n-1))
+
+primRec' h g n = snd( for (\(x, _) -> (x - 1, h x)) (n, g) )
+
+-- Esercizio 2D.1: Scrivere un one-liner Haskell partsFromAll tale che partsFromAll n allPartitions sia proprio la lista di liste che rappresenta le partizioni di n (in ordine ascendente, preferibilmente).
+partsFromAllAux  n (x:xs)
+    | n-x < 0 = []
+    | otherwise = x: partsFromAllAux (n-x) xs
+
+
+
 -- Esercizio 4D.1: scrivere un’equazione ricorsiva che genera l’albero di Calkin-Wilf
 data BinTree a = Node a (BinTree a) (BinTree a) | Empty
     deriving (Show)
@@ -37,8 +50,15 @@ visitaLivelli tree = visitaAux [tree]
 
 main :: IO ()
 main = do
+    let ris = partsFromAllAux 5 [3,2,1,1,1,1,1,1,1,1,1,1,1]
+    print ris
+
+{-
+main :: IO ()
+main = do
     let ris = visitaLivelli (takeNlevels 4 calkinTree)
     print ris
+-}
 
 {-
 main :: IO ()
