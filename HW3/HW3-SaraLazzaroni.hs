@@ -24,12 +24,31 @@ for f n = f . (for f (n-1))
 primRec' h g n = snd ((for (\(x, y) -> (x - 1, h (x-1) y)) n) (n,g))
 
 -- Esercizio 2D.1: Scrivere un one-liner Haskell partsFromAll tale che partsFromAll n allPartitions sia proprio la lista di liste che rappresenta le partizioni di n (in ordine ascendente, preferibilmente).
-partsFromAllAux  n (x:xs)
-    | n-x < 0 = []
-    | otherwise = x: partsFromAllAux (n-x) xs
+
+-- TODO: da modificare
+partsFromAll n xss = (takeWhile (\xs -> n /= head xs) (map (\xs -> take (length (takeWhile (\x -> x < n) (scanl (+) 0 xs))) xs) xss)) ++ [[n]]
 
 -- Esercizio 2D.2: Scrivere un’equazione ricorsiva che genera allPartitions.
 
+-- TODO: da modificare
+allPartitionsStart x = if even x then allPartitionsStartAux x else 3 : allPartitionsStartAux (x - 3)
+    where
+        allPartitionsStartAux 0 = []
+        allPartitionsStartAux x = 2 : allPartitionsStartAux (x - 2)
+
+nextPart n xs = nextPartAux n xs
+    where
+        nextPartAux n (x:y:xs) = if (((odd n) && (x == 1 + n `div` 2) && (y == n `div` 2)) || ((even n) && (x == n `div` 2) && (y == n `div` 2))) then (x + y) : xs else (if n - (x + y) >= y then (x + y) : xs else nextPartAux' n 0 (x:y:xs))
+        nextPartAux' n s (x:y:z:xs) = if diff >= y + z then diff : (y + z) : xs else x : nextPartAux' n (s + x) (y:z:xs)
+            where
+                diff = n - s - (y + z)
+
+allPartitions = (repeat 1) : allPartitionsAux 2 (repeat 1)
+    where
+        allPartitionsAux n (x:xs) = if x == n then boh : allPartitionsAux (n + 1) boh else boh1 : allPartitionsAux n boh1
+            where
+                boh = allPartitionsStart (n + 1) ++ repeat 1
+                boh1 = nextPart n (x:xs)
 
 -- Esercizio 3D.1: Date una definizione circolare dei numeri di Ulam, usando allSums ulams
 {-allSums [] = []
