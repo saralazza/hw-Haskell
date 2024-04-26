@@ -17,13 +17,38 @@ luckyNumbers = luckyAux (filter odd [3..])
 primRec h g 0 = g
 primRec h g n = h (n-1) (primRec h g (n-1))
 
-primRec' h g n = snd( for (\(x, _) -> (x - 1, h x)) (n, g) )
+-- Esercizio 1D.2: Scrivere in Haskell il funzionale primRec′ che definisce la ricorsione primitiva, senza fare ricorsione sui naturali, ma usando l’iterazione e le coppie, cio usando il funzionale for visto a lezione
+for f 0 = \x -> x
+for f n = f . (for f (n-1))
+
+primRec' h g n = snd ((for (\(x, y) -> (x - 1, h (x-1) y)) n) (n,g))
 
 -- Esercizio 2D.1: Scrivere un one-liner Haskell partsFromAll tale che partsFromAll n allPartitions sia proprio la lista di liste che rappresenta le partizioni di n (in ordine ascendente, preferibilmente).
 partsFromAllAux  n (x:xs)
     | n-x < 0 = []
     | otherwise = x: partsFromAllAux (n-x) xs
 
+-- Esercizio 2D.2: Scrivere un’equazione ricorsiva che genera allPartitions.
+
+
+-- Esercizio 3D.1: Date una definizione circolare dei numeri di Ulam, usando allSums ulams
+{-allSums [] = []
+allSums (x:xs) = map (x+) xs:allSums xs
+
+ulamNumbers = 1:2: nextUlam ulamNumbers where
+    nextUlam ulamList = newUlam : nextUlam (ulamList ++ [newUlam]) where
+        sums = concat (allSums ulamList)
+        filteredList = filter (\x -> (length (filter (==x) sums)) == 1) sums
+        newUlam = head filteredList
+
+    
+-- Definizione di diags
+diags :: [[a]] -> [[a]]
+diags (xs:xss) = crop [xs] xss
+  where
+    crop :: [[a]] -> [[a]] -> [[a]]
+    crop xss (ys:yss) = map head xss : crop (ys : map tail xss) yss
+    crop _ _ = []-}
 
 
 -- Esercizio 4D.1: scrivere un’equazione ricorsiva che genera l’albero di Calkin-Wilf
@@ -50,7 +75,7 @@ visitaLivelli tree = visitaAux [tree]
 
 main :: IO ()
 main = do
-    let ris = partsFromAllAux 5 [3,2,1,1,1,1,1,1,1,1,1,1,1]
+    let ris =  ulamNumbers
     print ris
 
 {-
