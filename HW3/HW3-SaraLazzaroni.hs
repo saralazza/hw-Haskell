@@ -21,7 +21,7 @@ primRec h g n = h (n-1) (primRec h g (n-1))
 for f 0 = \x -> x
 for f n = f . (for f (n-1))
 
-primRec' h g n = snd ((for (\(x, y) -> (x - 1, h (x-1) y)) n) (n,g))
+primRec' h g n = snd ((for (\(x, y) -> (x + 1, h x y)) n) (0,g))
 
 -- Esercizio 2D.1: Scrivere un one-liner Haskell partsFromAll tale che partsFromAll n allPartitions sia proprio la lista di liste che rappresenta le partizioni di n (in ordine ascendente, preferibilmente).
 
@@ -51,24 +51,29 @@ allPartitions = (repeat 1) : allPartitionsAux 2 (repeat 1)
                 boh1 = nextPart n (x:xs)
 
 -- Esercizio 3D.1: Date una definizione circolare dei numeri di Ulam, usando allSums ulams
-{-allSums [] = []
+allSums [] = []
 allSums (x:xs) = map (x+) xs:allSums xs
 
-ulamNumbers = 1:2: nextUlam ulamNumbers where
-    nextUlam ulamList = newUlam : nextUlam (ulamList ++ [newUlam]) where
-        sums = concat (allSums ulamList)
-        filteredList = filter (\x -> (length (filter (==x) sums)) == 1) sums
-        newUlam = head filteredList
+count x [] = 0
+count x (y:ys) 
+    | x==y = 1 + count x ys
+    | otherwise = count x ys
 
-    
--- Definizione di diags
-diags :: [[a]] -> [[a]]
-diags (xs:xss) = crop [xs] xss
-  where
-    crop :: [[a]] -> [[a]] -> [[a]]
-    crop xss (ys:yss) = map head xss : crop (ys : map tail xss) yss
-    crop _ _ = []-}
+diags (xs:xss) = zipWith (:) xs ([]:diags xss)
 
+merge (x:xs) (y:ys) = if x < y then x : merge xs (y:ys) else y : merge (x:xs) ys
+merge xs [] = xs
+merge [] ys = ys
+
+orderedDedup xs = head xs : map snd (filter (uncurry (/=)) (zip xs (tail xs)))
+
+ulams = 1:2: ps where
+    ps = ulamNumbers 1 2
+    ulamNumbers ndiag x = newUlam : ulamNumbers (ndiag + 1) newUlam where
+        sums = allSums ulams
+        interestedSums = filter (\y -> y > x) ( (take ndiag (diags sums)))
+        filteredList = filter (\x -> (count x interestedSums) == 1 ) interestedSums
+        newUlam = minimum filteredList
 
 -- Esercizio 4D.1: scrivere un’equazione ricorsiva che genera l’albero di Calkin-Wilf
 data BinTree a = Node a (BinTree a) (BinTree a) | Empty
@@ -94,7 +99,7 @@ visitaLivelli tree = visitaAux [tree]
 
 main :: IO ()
 main = do
-    let ris =  ulamNumbers
+    let ris = take 100 ulams
     print ris
 
 {-
