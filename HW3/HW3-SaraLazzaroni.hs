@@ -23,6 +23,9 @@ for f n = f . (for f (n-1))
 
 primRec' h g n = snd ((for (\(x, y) -> (x + 1, h x y)) n) (0,g))
 
+-- Esercizio 1D.3: Dedurne che in λ–calcolo si può facilmente definire la ricorsione primitiva usando i numerali di Church
+-- Soluzione: E' possibile definirla facilmente con i numerali di Church in quanto essi simulano lo stesso comportamento del for andando a comporre la funzione tante volte
+
 -- Esercizio 2D.1: Scrivere un one-liner Haskell partsFromAll tale che partsFromAll n allPartitions sia proprio la lista di liste che rappresenta le partizioni di n (in ordine ascendente, preferibilmente).
 
 -- TODO: da modificare
@@ -50,6 +53,9 @@ allPartitions = (repeat 1) : allPartitionsAux 2 (repeat 1)
                 boh = allPartitionsStart (n + 1) ++ repeat 1
                 boh1 = nextPart n (x:xs)
 
+-- Esercizio 2D.3: Sviluppare qualche idea per rappresentare altre strutture combinatorie in modo analogo, tipo: tutti i sottoinsiemi (finiti) dei Naturali.
+
+
 -- Esercizio 3D.1: Date una definizione circolare dei numeri di Ulam, usando allSums ulams
 allSums [] = []
 allSums (x:xs) = map (x+) xs:allSums xs
@@ -61,17 +67,11 @@ count x (y:ys)
 
 diags (xs:xss) = zipWith (:) xs ([]:diags xss)
 
-merge (x:xs) (y:ys) = if x < y then x : merge xs (y:ys) else y : merge (x:xs) ys
-merge xs [] = xs
-merge [] ys = ys
-
-orderedDedup xs = head xs : map snd (filter (uncurry (/=)) (zip xs (tail xs)))
-
 ulams = 1:2: ps where
     ps = ulamNumbers 1 2
     ulamNumbers ndiag x = newUlam : ulamNumbers (ndiag + 1) newUlam where
         sums = allSums ulams
-        interestedSums = filter (\y -> y > x) ( (take ndiag (diags sums)))
+        interestedSums = filter (\y -> y > x) ( concat (take ndiag (diags sums)))
         filteredList = filter (\x -> (count x interestedSums) == 1 ) interestedSums
         newUlam = minimum filteredList
 
@@ -99,8 +99,13 @@ visitaLivelli tree = visitaAux [tree]
 
 main :: IO ()
 main = do
-    let ris = take 100 ulams
+    let ris = take 10 ulams
     print ris
+
+{-main :: IO ()
+main = do
+    let ris = take 100 ulams
+    print ris-}
 
 {-
 main :: IO ()
