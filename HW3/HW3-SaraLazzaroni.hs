@@ -45,7 +45,8 @@ allPartitions = (repeat 1) : allPartitionsAux 2 where
     allPartitionsAux n = map ( ++ repeat 1) (filter discendenti (map newPartition (partsFromAll (n-1) allPartitions))) ++ allPartitionsAux (n+1)
     
 -- Esercizio 2D.3: Sviluppare qualche idea per rappresentare altre strutture combinatorie in modo analogo, tipo: tutti i sottoinsiemi (finiti) dei Naturali.
-
+allSubSet = [] : (allSubSetAux 1) where
+    allSubSetAux n = (map (n:) (takeWhile (\xs ->  (xs == []) || (n > head xs)) allSubSet)) ++ (allSubSetAux (n+1))
 
 -- Esercizio 3D.1: Date una definizione circolare dei numeri di Ulam, usando allSums ulams
 allSums [] = []
@@ -90,8 +91,13 @@ visitaLivelli tree = visitaAux [tree]
 
 main :: IO ()
 main = do
-    let ris = partsFromAll 8 allPartitions
+    let ris = take 32 allSubSet 
     print ris
+
+{-main :: IO ()
+main = do
+    let ris = partsFromAll 8 allPartitions
+    print ris-}
 
 {-main :: IO ()
 main = do
