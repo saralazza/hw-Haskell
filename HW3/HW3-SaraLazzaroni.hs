@@ -1,3 +1,5 @@
+import Data.List (concatMap)
+
 -- Esercizio 1: Scrivere una funzione Haskell che genera la lista infinita di caratteri insonnia = "1 sheep 2 sheep 3 sheep 4 sheep ...". Provare a scrivere un “one-liner”, cioè un programma che semplicemente compone opportunamente funzioni. Puo` essere utile la funzione show :: Show a => a => String che trasforma un elemento di qualsiasi tipo che implementa la classe Show in una stringa, cioè una lista di caratteri.
 insonnia = concat( map (\n -> show n ++ " sheep ") [1..])
 
@@ -48,6 +50,15 @@ allPartitions = (repeat 1) : allPartitionsAux 2 where
 allSubSet = [] : (allSubSetAux 1) where
     allSubSetAux n = (map (n:) (takeWhile (\xs ->  (xs == []) || (n > head xs)) allSubSet)) ++ (allSubSetAux (n+1))
 
+nextPermutation x i ys =  y1 ++ [x] ++ y2 where
+    (y1, y2) = splitAt i ys
+
+nextPermutations x i ys = if i == (n+1) then [] else [nextPermutation x i ys] ++ nextPermutations x (i+1) ys where 
+    n = length ys
+
+allPermutations = [] : allPermutationsAux 1 where
+    allPermutationsAux n = (concatMap (\xs -> nextPermutations n 0 xs) ((takeWhile (\xs ->  (xs == []) || (n > head xs)) allPermutations))) ++ (allPermutationsAux (n+1))
+
 -- Esercizio 3D.1: Date una definizione circolare dei numeri di Ulam, usando allSums ulams
 allSums [] = []
 allSums (x:xs) = map (x+) xs:allSums xs
@@ -91,8 +102,13 @@ visitaLivelli tree = visitaAux [tree]
 
 main :: IO ()
 main = do
-    let ris = take 32 allSubSet 
+    let ris = take 65 allPermutations
     print ris
+
+{-main :: IO ()
+main = do
+    let ris = take 32 allSubSet 
+    print ris-}
 
 {-main :: IO ()
 main = do
