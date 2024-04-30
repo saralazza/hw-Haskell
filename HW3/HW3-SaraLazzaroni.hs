@@ -29,10 +29,10 @@ primRec' h g n = snd ((for (\(x, y) -> (x + 1, h x y)) n) (0,g))
 -- Esercizio 2D.1: Scrivere un one-liner Haskell partsFromAll tale che partsFromAll n allPartitions sia proprio la lista di liste che rappresenta le partizioni di n (in ordine ascendente, preferibilmente).
 
 -- TODO: da modificare
-partsFromAll n xss = (takeWhile (\xs -> n /= head xs) (map (\xs -> take (length (takeWhile (\x -> x < n) (scanl (+) 0 xs))) xs) xss)) ++ [[n]]
+partsFromAll n xss = (takeWhile (\xs -> n /= head xs) (map (\xs -> take (length (takeWhile (< n) (scanl (+) 0 xs))) xs) xss)) ++ [[n]]
 
 -- Esercizio 2D.2: Scrivere un’equazione ricorsiva che genera allPartitions.
-newPartition xs = take (n-1) xs ++ [(xs !! (n-1)) + 1 ]where 
+newPartition xs = take (n-1) xs ++ [(xs !! (n-1)) + 1 ] where 
     n = length xs
 
 discendenti [] = True
@@ -42,7 +42,7 @@ discendenti (x:y:xs)
     | otherwise = discendenti (y:xs)
 
 allPartitions = (repeat 1) : allPartitionsAux 2 where
-    allPartitionsAux n = map ( ++ repeat 1) (filter discendenti ( map newPartition (partsFromAll (n-1) allPartitions))) ++ allPartitionsAux (n+1)
+    allPartitionsAux n = map ( ++ repeat 1) (filter discendenti (map newPartition (partsFromAll (n-1) allPartitions))) ++ allPartitionsAux (n+1)
     
 -- Esercizio 2D.3: Sviluppare qualche idea per rappresentare altre strutture combinatorie in modo analogo, tipo: tutti i sottoinsiemi (finiti) dei Naturali.
 
@@ -90,7 +90,7 @@ visitaLivelli tree = visitaAux [tree]
 
 main :: IO ()
 main = do
-    let ris = take 22 (map (take 10) allPartitions)
+    let ris = partsFromAll 8 allPartitions
     print ris
 
 {-main :: IO ()
