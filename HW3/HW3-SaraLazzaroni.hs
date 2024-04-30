@@ -32,27 +32,18 @@ primRec' h g n = snd ((for (\(x, y) -> (x + 1, h x y)) n) (0,g))
 partsFromAll n xss = (takeWhile (\xs -> n /= head xs) (map (\xs -> take (length (takeWhile (\x -> x < n) (scanl (+) 0 xs))) xs) xss)) ++ [[n]]
 
 -- Esercizio 2D.2: Scrivere un’equazione ricorsiva che genera allPartitions.
+newPartition xs = take (n-1) xs ++ [(xs !! (n-1)) + 1 ]where 
+    n = length xs
 
--- TODO: da modificare
-allPartitionsStart x = if even x then allPartitionsStartAux x else 3 : allPartitionsStartAux (x - 3)
-    where
-        allPartitionsStartAux 0 = []
-        allPartitionsStartAux x = 2 : allPartitionsStartAux (x - 2)
+discendenti [] = True
+discendenti [x] = True
+discendenti (x:y:xs)
+    | x<y = False
+    | otherwise = discendenti (y:xs)
 
-nextPart n xs = nextPartAux n xs
-    where
-        nextPartAux n (x:y:xs) = if (((odd n) && (x == 1 + n `div` 2) && (y == n `div` 2)) || ((even n) && (x == n `div` 2) && (y == n `div` 2))) then (x + y) : xs else (if n - (x + y) >= y then (x + y) : xs else nextPartAux' n 0 (x:y:xs))
-        nextPartAux' n s (x:y:z:xs) = if diff >= y + z then diff : (y + z) : xs else x : nextPartAux' n (s + x) (y:z:xs)
-            where
-                diff = n - s - (y + z)
-
-allPartitions = (repeat 1) : allPartitionsAux 2 (repeat 1)
-    where
-        allPartitionsAux n (x:xs) = if x == n then boh : allPartitionsAux (n + 1) boh else boh1 : allPartitionsAux n boh1
-            where
-                boh = allPartitionsStart (n + 1) ++ repeat 1
-                boh1 = nextPart n (x:xs)
-
+allPartitions = (repeat 1) : allPartitionsAux 2 where
+    allPartitionsAux n = map ( ++ repeat 1) (filter discendenti ( map newPartition (partsFromAll (n-1) allPartitions))) ++ allPartitionsAux (n+1)
+    
 -- Esercizio 2D.3: Sviluppare qualche idea per rappresentare altre strutture combinatorie in modo analogo, tipo: tutti i sottoinsiemi (finiti) dei Naturali.
 
 
@@ -99,7 +90,7 @@ visitaLivelli tree = visitaAux [tree]
 
 main :: IO ()
 main = do
-    let ris = take 10 ulams
+    let ris = take 22 (map (take 10) allPartitions)
     print ris
 
 {-main :: IO ()
