@@ -4,8 +4,6 @@ import Data.List (concatMap)
 insonnia = concat( map (\n -> show n ++ " sheep ") [1..])
 
 -- Esercizio 2: Definite in Haskell la lista infinita di liste finite tartaglia, tale che tartaglia!!n sia l’n-esima riga del triangolo di Tartaglia, e quindi tartaglia!!n!!k sia il coefficiente binomiale (n k).
-
---tartaglia = iterate (\row -> zipWith (+) (0 : row) (row ++ [0])) [1]
 tartAux xs = zipWith (+) (0:xs) (xs++[0])
 tartaglia = [1]: map tartAux tartaglia
 
@@ -129,3 +127,4 @@ main :: IO ()
 main = do
     let ris = "HW-SaraLazzaroni (1983548)"
     print ris
+    
