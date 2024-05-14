@@ -58,7 +58,6 @@ nodiEquilibratiAux (Node x sx dx) = do
 
 nodiEquilibrati tree = fst $ runState (nodiEquilibratiAux tree) (0,0)
 
-
 exT = (Node 5
         (Node 3
             (Node 2 Empty Empty) 
@@ -70,5 +69,63 @@ exT = (Node 5
         )
     )
 
+-- Esercizio 3: Definire il tipo NatBin che rappresenta i numeri naturali come sequenze binarie. Potete 
+-- definirlo come liste (di lunghezza fissata) di 0 e 1, oppure potete dare una definizione con data 
+-- (ad esempio usando 3 costruttori, di cui uno sia la costante 0 e gli altri due... in ogni caso, 
+-- immaginare di definire una “parola di memoria”, quindi prevedete una lunghezza massima costante).
+-- Definire un valutatore di espressioni aritmetiche su NatBin, analoghi a quelli visti a lezione, 
+-- ma considerare tutte le operazioni aritmetiche (+, ×, div, mod e -). Estendere il tipo Maybe in modo 
+-- che il risultato di un’espressione possa essere eventualmente un’eccezione diversa a seconda 
+-- dell’eventuale situazione anomala che si è verificata: divisione per zero, numero negativo oppure 
+-- overflow.
+-- Potete completare l’esercizio facendo in modo che il tipo NatBin sia un’i- stanza delle usuali classi 
+-- Eq, Ord, Num, Show.
+
+-- sequenza binaria di 8 bit
+data NatBin = NatBin Int Int Int Int Int Int Int Int
+    deriving (Show)
+
+data Bit = Zero | One deriving (Show)
+data NatBin' = End | Bit Bit NatBin' deriving (Show)
+
+due = Bit One (Bit Zero (Bit One End))
+due' = NatBin 0 0 0 0 0 0 1 0
+
+tre' = NatBin 0 0 0 0 0 0 1 1
+
+-- prendo una lista di bit perchè potrei dover fare la somma tra tre bit
+-- somma tra bits
+sumBits :: [Int] -> Int
+sumBits bits = mod (sum bits) 2
+
+-- calcolo del riporto della somma tra bits (vale 1 se la somma è 2 o 3, vale 0 se la somma è 1 o 0)
+carryBits :: [Int] -> Int
+carryBits bits = div (sum bits) 2
+
+halfAdder :: Int -> Int -> (Int, Int)
+halfAdder a b = (sumBits [a,b], carryBits [a,b])
+
+fullfAdder :: Int -> Int -> Int -> (Int, Int)
+fullfAdder a b cin = (sumBits [a,b,cin], carryBits [a,b,cin])
+
+-- somma tra due numeri binari: il primo bit lo faccio con un halfadder perchè non ha il riporto in ingresso
+-- tutti gli altri li faccio con il fulladder perchè ha anche il riporto
+addNatBin (NatBin a7 a6 a5 a4 a3 a2 a1 a0) (NatBin b7 b6 b5 b4 b3 b2 b1 b0) = 
+    NatBin s7 s6 s5 s4 s3 s2 s1 s0 where
+        (s0, c0) = halfAdder a0 b0
+        (s1, c1) = fullfAdder a1 b1 c0
+        (s2, c2) = fullfAdder a2 b2 c1
+        (s3, c3) = fullfAdder a3 b3 c2
+        (s4, c4) = fullfAdder a4 b4 c3
+        (s5, c5) = fullfAdder a5 b5 c4
+        (s6, c6) = fullfAdder a6 b6 c5
+        (s7, c7) = fullfAdder a7 b7 c6
+
+-- negativo di un numero binario
+negNatBin (NatBin a7 a6 a5 a4 a3 a2 a1 a0) = addNatBin (NatBin (1-a7) (1-a6) (1-a5) (1-a4) (1-a3) (1-a2) (1-a1) (1-a0)) (NatBin 0 0 0 0 0 0 0 1)
+
+subNatBin a b = addNatBin a (negNatBin b)
+
 main :: IO ()
-main = charCount
+main = do
+    print $ subNatBin tre' due'
