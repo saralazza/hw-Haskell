@@ -9,18 +9,20 @@ charCount = do
     strings <- getStrings n
     countAllChar <- countOccurrences strings
     putStrLn "Numero di occorrenze di ciascuna lettera:"
-    mapM_ (\(c, count) -> putStrLn $ c : ": " ++ show count) countAllChar
+    putStrLn (countsToString countAllChar)
+
+countsToString [] = ""
+countsToString [(c, count)] = (c : ": " ++ show count)
+countsToString ((c, count):rest) = (c : ": " ++ show count ++ "\n") ++ countsToString rest
 
 count x [] = 0
 count x (s:ss)
     | (elem x s) || (elem (toUpper x) s)= 1 + count x ss
     | otherwise = count x ss
 
-countOccurrences :: [String] -> IO [(Char, Int)]
 countOccurrences strings = do
     occurrences <- mapM (\x -> return (x, count x strings)) ['a'..'z']
     return (filter (\(_, y) -> y /= 0) occurrences)
-
 
 getStrings n 
     | n <= 0 = return []
