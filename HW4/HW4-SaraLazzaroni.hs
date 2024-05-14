@@ -78,20 +78,21 @@ exT = (Node 5
 -- che il risultato di un’espressione possa essere eventualmente un’eccezione diversa a seconda 
 -- dell’eventuale situazione anomala che si è verificata: divisione per zero, numero negativo oppure 
 -- overflow.
--- Potete completare l’esercizio facendo in modo che il tipo NatBin sia un’i- stanza delle usuali classi 
+-- Potete completare l’esercizio facendo in modo che il tipo NatBin sia un’istanza delle usuali classi 
 -- Eq, Ord, Num, Show.
 
 -- sequenza binaria di 8 bit
 data NatBin = NatBin Int Int Int Int Int Int Int Int
-    deriving (Show)
+    deriving (Show, Eq, Ord)
 
 data Bit = Zero | One deriving (Show)
 data NatBin' = End | Bit Bit NatBin' deriving (Show)
 
-due = Bit One (Bit Zero (Bit One End))
 due' = NatBin 0 0 0 0 0 0 1 0
 
 tre' = NatBin 0 0 0 0 0 0 1 1
+
+quattro' = NatBin 0 0 0 0 0 1 0 0
 
 -- prendo una lista di bit perchè potrei dover fare la somma tra tre bit
 -- somma tra bits
@@ -126,6 +127,66 @@ negNatBin (NatBin a7 a6 a5 a4 a3 a2 a1 a0) = addNatBin (NatBin (1-a7) (1-a6) (1-
 
 subNatBin a b = addNatBin a (negNatBin b)
 
+mulNumBit a b
+    | b == 0 = (NatBin 0 0 0 0 0 0 0 0)
+    | otherwise = a
+
+shift (NatBin a7 a6 a5 a4 a3 a2 a1 a0) i 
+    | i == 0 = (NatBin a7 a6 a5 a4 a3 a2 a1 a0)
+    | otherwise = (NatBin a6 a5 a4 a3 a2 a1 a0 0)
+
+multNatBin (NatBin a7 a6 a5 a4 a3 a2 a1 a0) (NatBin b7 b6 b5 b4 b3 b2 b1 b0) =
+    foldr (addNatBin) (NatBin 0 0 0 0 0 0 0 0) rows where 
+        rows = map (\(n, bit) ->  shift (mulNumBit (NatBin a7 a6 a5 a4 a3 a2 a1 a0) bit) n ) (zip [0..] [b0,b1,b2,b3,b4,b5,b6,b7])
+
+divNatBin x y 
+    -- aggiungere eccezione
+    | x == (NatBin 0 0 0 0 0 0 0 0) = (NatBin 0 0 0 0 0 0 0 0)
+    | x < y = (NatBin 0 0 0 0 0 0 0 0)
+    | otherwise = fst $ divmodAux x y ((NatBin 0 0 0 0 0 0 0 0), x)
+
+modNatBin x y = snd $ divmodAux x y ((NatBin 0 0 0 0 0 0 0 0), x)
+
+divmodAux x y (p,q)
+    | x < y = (p, q)
+    | otherwise = divmodAux (subNatBin x y) y (addNatBin p (NatBin 0 0 0 0 0 0 0 1), subNatBin x y)
+
+data Expression = Value NatBin 
+                | Add Expression Expression
+                | Sub Expression Expression
+                | Mul Expression Expression
+                | Div Expression Expression
+                | Mod Expression Expression
+                deriving (Show, Eq)
+
+data Exception = DivByZero | NegativeNumber | Owerflow
+    deriving (Show, Eq)
+
+data MaybeNatBin a = Exc Exception | Just a
+
+eval (Value x) = Just x
+eval (Add e1 e2) = do
+    x <- eval e1
+    y <- eval e2 
+    Just (addNatBin x y)
+eval (Mul e1 e2) = do
+    x <- eval e1
+    y <- eval e2
+    Just (multNatBin x y)
+eval (Sub e1 e2) = do
+    x <- eval e1
+    y <- eval e2
+    if x < y then Exception NegativeNumber else Just (subNatBin x y)
+eval (Div e1 e2) = do
+    x <- eval e1
+    y <- eval e2
+    if y == (NatBin 0 0 0 0 0 0 0 0) then Exception DivByZero else Just (divNatBin x y)
+eval (Mod e1 e2) = do
+    x <- eval e1
+    y <- eval e2
+    if y == (NatBin 0 0 0 0 0 0 0 0) then Exception DivByZero else Just (modNatBin x y)
+
+
 main :: IO ()
 main = do
-    print $ subNatBin tre' due'
+    print $ divNatBin tre' due'
