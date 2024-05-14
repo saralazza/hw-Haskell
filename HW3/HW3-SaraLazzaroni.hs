@@ -127,4 +127,3 @@ main :: IO ()
 main = do
     let ris = "HW-SaraLazzaroni (1983548)"
     print ris
-    
