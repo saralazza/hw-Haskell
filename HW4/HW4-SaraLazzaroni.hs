@@ -88,6 +88,33 @@ data NatBin = NatBin Int Int Int Int Int Int Int Int
 data Bit = Zero | One deriving (Show)
 data NatBin' = End | Bit Bit NatBin' deriving (Show)
 
+data Expression = Value NatBin 
+                | Add Expression Expression
+                | Sub Expression Expression
+                | Mul Expression Expression
+                | Div Expression Expression
+                | Mod Expression Expression
+                deriving (Show, Eq)
+
+data Exception = DivByZero | NegativeNumber | Owerflow
+    deriving (Show, Eq)
+
+newtype ST s a = S (s -> (a, s))
+
+app :: ST s a -> s -> (a, s)
+app (S f) = f
+
+instance Functor (ST s) where
+    fmap f st = S (\s -> let (x, s') = app st s in (f x, s'))
+
+instance Applicative (ST s) where
+    pure x = S (\s -> (x, s))
+    stf <*> stx = S (\s -> let (f, s') = app stf s in let (x, s'') = app stx s' in (f x, s''))
+
+instance Monad (ST s) where
+    stx >>= f = S (\s -> let (x, s') = app stx s in app (f x) s')
+    return = pure
+
 due' = NatBin 0 0 0 0 0 0 1 0
 
 tre' = NatBin 0 0 0 0 0 0 1 1
@@ -111,7 +138,7 @@ fullfAdder a b cin = (sumBits [a,b,cin], carryBits [a,b,cin])
 
 -- somma tra due numeri binari: il primo bit lo faccio con un halfadder perchè non ha il riporto in ingresso
 -- tutti gli altri li faccio con il fulladder perchè ha anche il riporto
-addNatBin (NatBin a7 a6 a5 a4 a3 a2 a1 a0) (NatBin b7 b6 b5 b4 b3 b2 b1 b0) = 
+addNatBinAux   (NatBin a7 a6 a5 a4 a3 a2 a1 a0) (NatBin b7 b6 b5 b4 b3 b2 b1 b0) = 
     NatBin s7 s6 s5 s4 s3 s2 s1 s0 where
         (s0, c0) = halfAdder a0 b0
         (s1, c1) = fullfAdder a1 b1 c0
@@ -123,9 +150,9 @@ addNatBin (NatBin a7 a6 a5 a4 a3 a2 a1 a0) (NatBin b7 b6 b5 b4 b3 b2 b1 b0) =
         (s7, c7) = fullfAdder a7 b7 c6
 
 -- negativo di un numero binario
-negNatBin (NatBin a7 a6 a5 a4 a3 a2 a1 a0) = addNatBin (NatBin (1-a7) (1-a6) (1-a5) (1-a4) (1-a3) (1-a2) (1-a1) (1-a0)) (NatBin 0 0 0 0 0 0 0 1)
+negNatBin (NatBin a7 a6 a5 a4 a3 a2 a1 a0) = addNatBinAux  (NatBin (1-a7) (1-a6) (1-a5) (1-a4) (1-a3) (1-a2) (1-a1) (1-a0)) (NatBin 0 0 0 0 0 0 0 1)
 
-subNatBin a b = addNatBin a (negNatBin b)
+subNatBin a b = addNatBinAux  a (negNatBin b)
 
 mulNumBit a b
     | b == 0 = (NatBin 0 0 0 0 0 0 0 0)
@@ -136,57 +163,40 @@ shift (NatBin a7 a6 a5 a4 a3 a2 a1 a0) i
     | otherwise = (NatBin a6 a5 a4 a3 a2 a1 a0 0)
 
 multNatBin (NatBin a7 a6 a5 a4 a3 a2 a1 a0) (NatBin b7 b6 b5 b4 b3 b2 b1 b0) =
-    foldr (addNatBin) (NatBin 0 0 0 0 0 0 0 0) rows where 
+    foldr (addNatBinAux) (NatBin 0 0 0 0 0 0 0 0) rows where 
         rows = map (\(n, bit) ->  shift (mulNumBit (NatBin a7 a6 a5 a4 a3 a2 a1 a0) bit) n ) (zip [0..] [b0,b1,b2,b3,b4,b5,b6,b7])
 
-divNatBin x y 
-    -- aggiungere eccezione
-    | x == (NatBin 0 0 0 0 0 0 0 0) = (NatBin 0 0 0 0 0 0 0 0)
-    | x < y = (NatBin 0 0 0 0 0 0 0 0)
-    | otherwise = fst $ divmodAux x y ((NatBin 0 0 0 0 0 0 0 0), x)
+divNatBin :: Maybe NatBin -> Maybe NatBin -> Maybe NatBin
+divNatBin mx my = do
+  x <- mx
+  y <- my
+  if y == NatBin 0 0 0 0 0 0 0 0
+    then Nothing
+    else Just (fst $ divmodAux x y (NatBin 0 0 0 0 0 0 0 0, x))
 
-modNatBin x y = snd $ divmodAux x y ((NatBin 0 0 0 0 0 0 0 0), x)
+modNatBin mx my = do
+    x <- mx
+    y <- my
+    if y == NatBin 0 0 0 0 0 0 0 0
+        then Nothing
+        else Just( snd $ divmodAux x y ((NatBin 0 0 0 0 0 0 0 0), x))
 
 divmodAux x y (p,q)
     | x < y = (p, q)
-    | otherwise = divmodAux (subNatBin x y) y (addNatBin p (NatBin 0 0 0 0 0 0 0 1), subNatBin x y)
+    | otherwise = divmodAux (subNatBin x y) y (addNatBinAux  p (NatBin 0 0 0 0 0 0 0 1), subNatBin x y)
 
-data Expression = Value NatBin 
-                | Add Expression Expression
-                | Sub Expression Expression
-                | Mul Expression Expression
-                | Div Expression Expression
-                | Mod Expression Expression
-                deriving (Show, Eq)
+logNatBin Nothing (Div x y) = S (\s -> (Nothing, Just DivByZero))
+logNatBin Nothing (Mod x y) = S (\s -> (Nothing, Just DivByZero))
+logNatBin v _ = S (\s -> (v, s))
 
-data Exception = DivByZero | NegativeNumber | Owerflow
-    deriving (Show, Eq)
-
-data MaybeNatBin a = Exc Exception | Just a
-
-eval (Value x) = Just x
-eval (Add e1 e2) = do
-    x <- eval e1
-    y <- eval e2 
-    Just (addNatBin x y)
-eval (Mul e1 e2) = do
-    x <- eval e1
-    y <- eval e2
-    Just (multNatBin x y)
-eval (Sub e1 e2) = do
-    x <- eval e1
-    y <- eval e2
-    if x < y then Exception NegativeNumber else Just (subNatBin x y)
-eval (Div e1 e2) = do
-    x <- eval e1
-    y <- eval e2
-    if y == (NatBin 0 0 0 0 0 0 0 0) then Exception DivByZero else Just (divNatBin x y)
-eval (Mod e1 e2) = do
-    x <- eval e1
-    y <- eval e2
-    if y == (NatBin 0 0 0 0 0 0 0 0) then Exception DivByZero else Just (modNatBin x y)
-
+eval (Value x) = S (\s -> (Just x, s))
+eval (Div x y) = do u <- eval x
+                    v <- eval y
+                    logNatBin (divNatBin u v) (Div x y)
+eval (Mod x y) = do u <- eval x
+                    v <- eval y
+                    logNatBin (modNatBin u v) (Div x y)
 
 main :: IO ()
 main = do
-    print $ divNatBin tre' due'
+    print $ show $ let term = Mod (Value quattro') (Value (NatBin 0 0 0 0 0 0 0 0)) in app (eval term) Nothing
