@@ -1,5 +1,6 @@
 import Data.Char (toUpper)
 import Control.Monad.State
+import Control.Applicative
 
 -- Esercizio 1: Definite un’azione charCount :: IO () che legge un numero n da tastiera, poi n stringhe e alla fine stampa il numero di stringhe in cui appare ciascuna lettera.
 charCount :: IO ()
@@ -82,7 +83,7 @@ exT = (Node 5
 -- Eq, Ord, Num, Show.
 
 -- sequenza binaria di 8 bit
-data NatBin = NatBin Int Int Int Int Int Int Int Int
+{-data NatBin = NatBin Int Int Int Int Int Int Int Int
     deriving (Show, Eq, Ord)
 
 data Bit = Zero | One deriving (Show)
@@ -98,22 +99,6 @@ data Expression = Value NatBin
 
 data Exception = DivByZero | NegativeNumber | Owerflow
     deriving (Show, Eq)
-
-newtype ST s a = S (s -> (a, s))
-
-app :: ST s a -> s -> (a, s)
-app (S f) = f
-
-instance Functor (ST s) where
-    fmap f st = S (\s -> let (x, s') = app st s in (f x, s'))
-
-instance Applicative (ST s) where
-    pure x = S (\s -> (x, s))
-    stf <*> stx = S (\s -> let (f, s') = app stf s in let (x, s'') = app stx s' in (f x, s''))
-
-instance Monad (ST s) where
-    stx >>= f = S (\s -> let (x, s') = app stx s in app (f x) s')
-    return = pure
 
 due' = NatBin 0 0 0 0 0 0 1 0
 
@@ -195,8 +180,95 @@ eval (Div x y) = do u <- eval x
                     logNatBin (divNatBin u v) (Div x y)
 eval (Mod x y) = do u <- eval x
                     v <- eval y
-                    logNatBin (modNatBin u v) (Div x y)
+                    logNatBin (modNatBin u v) (Div x y)-}
+
+data NatBin = End | Zero NatBin | One NatBin
+    deriving (Show, Eq, Ord)
+
+
+
+-- Funzione ricorsiva per sommare due numeri binari con il carry
+addNatBin a b = addBits a b (Zero End) where
+    addBits End End x = x
+    addBits (Zero a) End (Zero End) = Zero (addBits a End (Zero End))
+    addBits (Zero a) End (One End) = One (addBits a End (Zero End))
+    addBits (One a) End (Zero End) = One (addBits a End (Zero End))
+    addBits (One a) End (One End) = Zero (addBits a End (One End))
+    addBits End (Zero b) (Zero End) = Zero (addBits End b (Zero End))
+    addBits End (Zero b) (One End) = One (addBits End b (Zero End) )
+    addBits End (One b) (Zero End) = One (addBits End b (Zero End))
+    addBits End (One b) (One End) = Zero (addBits End b (One End))
+    addBits (Zero a) (Zero b) (Zero End) = Zero (addBits a b (Zero End))
+    addBits (Zero a) (Zero b) (One End) = One (addBits a b (Zero End))
+    addBits (Zero a) (One b) (Zero End) = One (addBits a b (Zero End))
+    addBits (Zero a) (One b) (One End) = Zero (addBits a b (One End))
+    addBits (One a) (Zero b) (Zero End) = One (addBits a b (Zero End))
+    addBits (One a) (Zero b) (One End) = Zero (addBits a b (One End)) 
+    addBits (One a) (One b) (Zero End) = Zero (addBits a b (One End))
+    addBits (One a) (One b) (One End) = One (addBits a b (One End))
+
+
+shift :: NatBin -> NatBin
+shift a = Zero a 
+
+mulNumBit (One End) (One b) = One (mulNumBit (One End) b)
+mulNumBit (Zero End) (Zero b) = Zero (mulNumBit (Zero End) b)
+mulNumBit (One End) (Zero b) = Zero (mulNumBit (One End) b)
+mulNumBit (Zero End) (One b) = Zero (mulNumBit (Zero End) b)
+mulNumBit _ _ = End
+
+multNatBin :: NatBin -> NatBin -> NatBin
+multNatBin a b = multNatBinAux a b 0 where
+    multNatBinAux a (Zero b) i = multNatBinAux a b (i+1)
+    multNatBinAux a (One b) i = addNatBin (shift (mulNumBit (One End) a)) (multNatBinAux a b (i+1))
+    multNatBinAux _ _ i = End
+
+subNatBin a b = subBits a b (Zero End) where
+    subBits End End x = x
+    subBits (Zero a) End (Zero End) = Zero (subBits a End (Zero End))
+    subBits (Zero a) End (One End) = One (subBits a End (One End))
+    subBits (One a) End (Zero End) = One (subBits a End (Zero End))
+    subBits (One a) End (One End) = Zero (subBits a End (Zero End))
+    subBits End (Zero b) (Zero End) = Zero (subBits End b (Zero End))
+    subBits End (Zero b) (One End) = One (subBits End b (One End))
+    subBits End (One b) (Zero End) = One (subBits End b (One End))
+    subBits End (One b) (One End) = Zero (subBits End b (One End)) 
+    subBits (Zero a) (Zero b) (Zero End) = Zero (subBits a b (Zero End))
+    subBits (Zero a) (Zero b) (One End) = One (subBits a b (One End))
+    subBits (Zero a) (One b) (Zero End) = One (subBits a b (One End))
+    subBits (Zero a) (One b) (One End) = Zero (subBits a b (One End))
+    subBits (One a) (Zero b) (Zero End) = One (subBits a b (Zero End))
+    subBits (One a) (Zero b) (One End) = Zero (subBits a b (Zero End))
+    subBits (One a) (One b) (Zero End) = Zero (subBits a b (Zero End))
+    subBits (One a) (One b) (One End) = One (subBits a b (One End))
+
+divNatBin a b = fst (divmodAux a b ((Zero End), a))
+
+due = Zero(One (Zero End))
+quattro = Zero(Zero(One End))
+tre = One(One End)
+
+minority a b = fst $ minorityAux a b where
+    minorityAux (Zero a) End = (False, False)
+    minorityAux (One a) End = (True, True)
+    minorityAux End (Zero b) = (False, False)
+    minorityAux End (One b) = (True, True)
+    minorityAux (Zero End) (One End) = (True, True)
+    minorityAux (One End) (Zero End) = (False, True)
+    minorityAux (Zero End) (Zero End) = (False, False)
+    minorityAux (One End) (One End) = (False, False)
+    minorityAux (Zero a) (Zero b) = if flag then (ris, True) else (ris, False) where (ris, flag) = minorityAux a b
+    minorityAux (One a) (One b) = if flag then (ris, True) else (ris, False) where (ris, flag) = minorityAux a b
+    minorityAux (One a) (Zero b) = if flag then (ris, True) else (False, True) where (ris, flag) = minorityAux a b
+    minorityAux (Zero a) (One b) = if flag then (ris, True) else (True, True) where (ris, flag) = minorityAux a b
+
+divmodAux a b (p, q) 
+    | minority a b = (p,q)
+    | otherwise = divmodAux (subNatBin a b) b (addNatBin  p (One End), subNatBin a b)
 
 main :: IO ()
 main = do
-    print $ show $ let term = Mod (Value quattro') (Value (NatBin 0 0 0 0 0 0 0 0)) in app (eval term) Nothing
+    --print $ show $  divmodAux (Zero (One (Zero (Zero End)))) quattro ((One (Zero End)), (Zero (One (Zero (Zero End)))))
+    print $ show $  divNatBin quattro due
+-- subNatBin quattro due = Zero (One (Zero (Zero End)))
+-- addNatBin  ((Zero End)) (One End) = One (Zero End)
