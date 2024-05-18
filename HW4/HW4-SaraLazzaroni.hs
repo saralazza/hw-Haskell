@@ -131,6 +131,35 @@ due = Zero (One (Zero (Zero (Zero (Zero (Zero (Zero End)))))))
 tre = One (One (Zero (Zero (Zero (Zero (Zero (Zero End)))))))
 quattro = Zero (Zero (One (Zero (Zero (Zero (Zero (Zero End)))))))
 
+troppo = One (One (One (One (One (One (One (One End)))))))
+
+
+{-addNatBin a b = addBits a b (Zero End) where
+    addBits End End x = Just' End 
+    addBits (Zero End) (Zero End) x = Just' x
+    addBits (Zero End) (One End) (Zero End) = Just' (One End)
+    addBits (Zero End) (One End) (One End) = Owerflow
+    addBits (One End) (Zero End) (Zero End) = One End
+    addBits (One End) (Zero End) (One End) = Owerflow
+    addBits (One End) (One End) (Zero End) = Owerflow
+    addBits (One End) (One End) (One End) = Owerflow
+    addBits (Zero a) End (Zero End) = Just' (Zero (addBits a End (Zero End)))
+    addBits (Zero a) End (One End) = Just' (One (addBits a End (Zero End)))
+    addBits (One a) End (Zero End) = Just' (One (addBits a End (Zero End)))
+    addBits (One a) End (One End) = Just' (Zero (addBits a End (One End)))
+    addBits End (Zero b) (Zero End) = Just' (Zero (addBits End b (Zero End)))
+    addBits End (Zero b) (One End) = Just' (One (addBits End b (Zero End)))
+    addBits End (One b) (Zero End) = Just' (One (addBits End b (Zero End)))
+    addBits End (One b) (One End) = Just' (Zero (addBits End b (One End)))
+    addBits (Zero a) (Zero b) (Zero End) = Just' (Zero (addBits a b (Zero End)))
+    addBits (Zero a) (Zero b) (One End) = Just' (One (addBits a b (Zero End)))
+    addBits (Zero a) (One b) (Zero End) = Just' (One (addBits a b (Zero End)))
+    addBits (Zero a) (One b) (One End) = Just' (Zero (addBits a b (One End)))
+    addBits (One a) (Zero b) (Zero End) = Just' (One (addBits a b (Zero End)))
+    addBits (One a) (Zero b) (One End) = Just' (Zero (addBits a b (One End)))
+    addBits (One a) (One b) (Zero End) = Just' (Zero (addBits a b (One End)))
+    addBits (One a) (One b) (One End) = Just' (One (addBits a b (One End)))-}
+
 addNatBin a b = addBits a b (Zero End) where
     addBits End End x = End
     addBits (Zero a) End (Zero End) = Zero (addBits a End (Zero End))
@@ -150,7 +179,6 @@ addNatBin a b = addBits a b (Zero End) where
     addBits (One a) (One b) (Zero End) = Zero (addBits a b (One End))
     addBits (One a) (One b) (One End) = One (addBits a b (One End))
 
-
 shift :: NatBin -> Int -> NatBin
 shift a 0 = a
 shift a i = Zero (shift a (i-1)) 
@@ -161,30 +189,32 @@ mulNumBit (One End) (Zero b) = Zero (mulNumBit (One End) b)
 mulNumBit (Zero End) (One b) = Zero (mulNumBit (Zero End) b)
 mulNumBit _ _ = End
 
-multNatBin :: NatBin -> NatBin -> NatBin
-multNatBin a b = multNatBinAux a b 0 where
+multNatBin a b = Just' (multNatBinAux a b 0) where
     multNatBinAux a (Zero b) i = multNatBinAux a b (i+1)
     multNatBinAux a (One b) i = addNatBin (shift a i) (multNatBinAux a b (i+1))
     multNatBinAux _ _ i = End
 
-subNatBin a b = subBits a b (Zero End) where
-    subBits End End x = End
-    subBits (Zero a) End (Zero End) = Zero (subBits a End (Zero End))
-    subBits (Zero a) End (One End) = One (subBits a End (One End))
-    subBits (One a) End (Zero End) = One (subBits a End (Zero End))
-    subBits (One a) End (One End) = Zero (subBits a End (Zero End))
-    subBits End (Zero b) (Zero End) = Zero (subBits End b (Zero End))
-    subBits End (Zero b) (One End) = One (subBits End b (One End))
-    subBits End (One b) (Zero End) = One (subBits End b (One End))
-    subBits End (One b) (One End) = Zero (subBits End b (One End)) 
-    subBits (Zero a) (Zero b) (Zero End) = Zero (subBits a b (Zero End))
-    subBits (Zero a) (Zero b) (One End) = One (subBits a b (One End))
-    subBits (Zero a) (One b) (Zero End) = One (subBits a b (One End))
-    subBits (Zero a) (One b) (One End) = Zero (subBits a b (One End))
-    subBits (One a) (Zero b) (Zero End) = One (subBits a b (Zero End))
-    subBits (One a) (Zero b) (One End) = Zero (subBits a b (Zero End))
-    subBits (One a) (One b) (Zero End) = Zero (subBits a b (Zero End))
-    subBits (One a) (One b) (One End) = One (subBits a b (One End))
+subNatBin a b 
+    | minority a b = NegativeNumber
+    |otherwise = Just' (subBits a b (Zero End)) 
+    where
+        subBits End End x = End
+        subBits (Zero a) End (Zero End) = Zero (subBits a End (Zero End))
+        subBits (Zero a) End (One End) = One (subBits a End (One End))
+        subBits (One a) End (Zero End) = One (subBits a End (Zero End))
+        subBits (One a) End (One End) = Zero (subBits a End (Zero End))
+        subBits End (Zero b) (Zero End) = Zero (subBits End b (Zero End))
+        subBits End (Zero b) (One End) = One (subBits End b (One End))
+        subBits End (One b) (Zero End) = One (subBits End b (One End))
+        subBits End (One b) (One End) = Zero (subBits End b (One End)) 
+        subBits (Zero a) (Zero b) (Zero End) = Zero (subBits a b (Zero End))
+        subBits (Zero a) (Zero b) (One End) = One (subBits a b (One End))
+        subBits (Zero a) (One b) (Zero End) = One (subBits a b (One End))
+        subBits (Zero a) (One b) (One End) = Zero (subBits a b (One End))
+        subBits (One a) (Zero b) (Zero End) = One (subBits a b (Zero End))
+        subBits (One a) (Zero b) (One End) = Zero (subBits a b (Zero End))
+        subBits (One a) (One b) (Zero End) = Zero (subBits a b (Zero End))
+        subBits (One a) (One b) (One End) = One (subBits a b (One End))
 
 minority a b = fst $ minorityAux a b where
     minorityAux (Zero a) End = (False, False)
@@ -202,15 +232,22 @@ minority a b = fst $ minorityAux a b where
 
 divNatBin a b 
     | b == zero = DivByZero
-    | otherwise = Just' (fst (divmodAux a b (zero, a)))
+    | otherwise = do
+        ris <- divmodAux a b (zero, a)
+        Just' (fst ris)
 
 modNatBin a b
     | b == zero = DivByZero
-    | otherwise = Just' (snd (divmodAux a b (zero, a)))
+    | otherwise = do
+        ris <- divmodAux a b (zero, a)
+        Just' (snd ris)
 
 divmodAux a b (p, q)
-    | minority a b = (p,q)
-    | otherwise = divmodAux (subNatBin a b) b (addNatBin  p uno, subNatBin a b)
+    | minority a b = Just' (p,q)
+    | otherwise = do
+        q' <- subNatBin q b
+        let p' = addNatBin p uno
+        divmodAux q' b (p', q')
 
 eval (Value x) = Just' x
 eval (Div x y) = do u <- eval x
@@ -218,8 +255,16 @@ eval (Div x y) = do u <- eval x
                     divNatBin u v 
 eval (Mod x y) = do u <- eval x
                     v <- eval y
-                    modNatBin u v 
+                    modNatBin u v
+eval (Sub x y) = do u <- eval x
+                    v <- eval y
+                    subNatBin u v
+eval (Mul x y) = do u <- eval x
+                    v <- eval y
+                    multNatBin u v
 
 main :: IO ()
 main = do
-    print $ show $ eval (Div (Value quattro) (Mod (Value due) (Value zero)))
+    --print $ show $ subNatBin due quattro
+    -- print $ show $ eval (Mul (Value quattro) (Value due))
+    --print $ show $ eval (Div (Value quattro) (Sub (Value due) (Value tre)))
