@@ -185,9 +185,12 @@ eval (Mod x y) = do u <- eval x
 data NatBin = End | Zero NatBin | One NatBin
     deriving (Show, Eq, Ord)
 
+uno = One (Zero (Zero (Zero (Zero (Zero (Zero (Zero End)))))))
+zero = Zero (Zero (Zero (Zero (Zero (Zero (Zero (Zero End)))))))
+due = Zero (One (Zero (Zero (Zero (Zero (Zero (Zero End)))))))
+tre = One (One (Zero (Zero (Zero (Zero (Zero (Zero End)))))))
+quattro = Zero (Zero (One (Zero (Zero (Zero (Zero (Zero End)))))))
 
-
--- Funzione ricorsiva per sommare due numeri binari con il carry
 addNatBin a b = addBits a b (Zero End) where
     addBits End End x = x
     addBits (Zero a) End (Zero End) = Zero (addBits a End (Zero End))
@@ -208,8 +211,9 @@ addNatBin a b = addBits a b (Zero End) where
     addBits (One a) (One b) (One End) = One (addBits a b (One End))
 
 
-shift :: NatBin -> NatBin
-shift a = Zero a 
+shift :: NatBin -> Int -> NatBin
+shift a 0 = a
+shift a i = Zero (shift a (i-1)) 
 
 mulNumBit (One End) (One b) = One (mulNumBit (One End) b)
 mulNumBit (Zero End) (Zero b) = Zero (mulNumBit (Zero End) b)
@@ -220,7 +224,7 @@ mulNumBit _ _ = End
 multNatBin :: NatBin -> NatBin -> NatBin
 multNatBin a b = multNatBinAux a b 0 where
     multNatBinAux a (Zero b) i = multNatBinAux a b (i+1)
-    multNatBinAux a (One b) i = addNatBin (shift (mulNumBit (One End) a)) (multNatBinAux a b (i+1))
+    multNatBinAux a (One b) i = addNatBin (shift a i) (multNatBinAux a b (i+1))
     multNatBinAux _ _ i = End
 
 subNatBin a b = subBits a b (Zero End) where
@@ -242,12 +246,6 @@ subNatBin a b = subBits a b (Zero End) where
     subBits (One a) (One b) (Zero End) = Zero (subBits a b (Zero End))
     subBits (One a) (One b) (One End) = One (subBits a b (One End))
 
-divNatBin a b = fst (divmodAux a b ((Zero End), a))
-
-due = Zero(One (Zero End))
-quattro = Zero(Zero(One End))
-tre = One(One End)
-
 minority a b = fst $ minorityAux a b where
     minorityAux (Zero a) End = (False, False)
     minorityAux (One a) End = (True, True)
@@ -262,13 +260,14 @@ minority a b = fst $ minorityAux a b where
     minorityAux (One a) (Zero b) = if flag then (ris, True) else (False, True) where (ris, flag) = minorityAux a b
     minorityAux (Zero a) (One b) = if flag then (ris, True) else (True, True) where (ris, flag) = minorityAux a b
 
+divNatBin a b = fst (divmodAux a b (zero, a))
+
+modNatBin a b = snd (divmodAux a b (zero, a))
+
 divmodAux a b (p, q) 
     | minority a b = (p,q)
-    | otherwise = divmodAux (subNatBin a b) b (addNatBin  p (One End), subNatBin a b)
+    | otherwise = divmodAux (subNatBin a b) b (addNatBin  p uno, subNatBin a b)
 
 main :: IO ()
 main = do
-    --print $ show $  divmodAux (Zero (One (Zero (Zero End)))) quattro ((One (Zero End)), (Zero (One (Zero (Zero End)))))
-    print $ show $  divNatBin quattro due
--- subNatBin quattro due = Zero (One (Zero (Zero End)))
--- addNatBin  ((Zero End)) (One End) = One (Zero End)
+    print $ show $  modNatBin tre due
