@@ -196,5 +196,5 @@ myScanr f e (x:xs) = f x (head ys): ys where
 
 main :: IO ()
 main = do
-    let ris =  listToABR [10,3,2,1,4,6,2,11,5,7]
+    let ris =  nodiEquilibrati (Node 5(Node 3 (Node 2 Empty Empty) Empty)(Node 1 Empty (Node 4 Empty Empty)))
     print ris

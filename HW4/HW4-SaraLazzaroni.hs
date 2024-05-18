@@ -83,97 +83,7 @@ exT = (Node 5
 -- Eq, Ord, Num, Show.
 
 -- sequenza binaria di 8 bit
-{-data NatBin = NatBin Int Int Int Int Int Int Int Int
-    deriving (Show, Eq, Ord)
-
-data Bit = Zero | One deriving (Show)
-data NatBin' = End | Bit Bit NatBin' deriving (Show)
-
-data Expression = Value NatBin 
-                | Add Expression Expression
-                | Sub Expression Expression
-                | Mul Expression Expression
-                | Div Expression Expression
-                | Mod Expression Expression
-                deriving (Show, Eq)
-
-data Exception = DivByZero | NegativeNumber | Owerflow
-    deriving (Show, Eq)
-
-due' = NatBin 0 0 0 0 0 0 1 0
-
-tre' = NatBin 0 0 0 0 0 0 1 1
-
-quattro' = NatBin 0 0 0 0 0 1 0 0
-
--- prendo una lista di bit perchè potrei dover fare la somma tra tre bit
--- somma tra bits
-sumBits :: [Int] -> Int
-sumBits bits = mod (sum bits) 2
-
--- calcolo del riporto della somma tra bits (vale 1 se la somma è 2 o 3, vale 0 se la somma è 1 o 0)
-carryBits :: [Int] -> Int
-carryBits bits = div (sum bits) 2
-
-halfAdder :: Int -> Int -> (Int, Int)
-halfAdder a b = (sumBits [a,b], carryBits [a,b])
-
-fullfAdder :: Int -> Int -> Int -> (Int, Int)
-fullfAdder a b cin = (sumBits [a,b,cin], carryBits [a,b,cin])
-
--- somma tra due numeri binari: il primo bit lo faccio con un halfadder perchè non ha il riporto in ingresso
--- tutti gli altri li faccio con il fulladder perchè ha anche il riporto
-addNatBinAux   (NatBin a7 a6 a5 a4 a3 a2 a1 a0) (NatBin b7 b6 b5 b4 b3 b2 b1 b0) = 
-    NatBin s7 s6 s5 s4 s3 s2 s1 s0 where
-        (s0, c0) = halfAdder a0 b0
-        (s1, c1) = fullfAdder a1 b1 c0
-        (s2, c2) = fullfAdder a2 b2 c1
-        (s3, c3) = fullfAdder a3 b3 c2
-        (s4, c4) = fullfAdder a4 b4 c3
-        (s5, c5) = fullfAdder a5 b5 c4
-        (s6, c6) = fullfAdder a6 b6 c5
-        (s7, c7) = fullfAdder a7 b7 c6
-
--- negativo di un numero binario
-negNatBin (NatBin a7 a6 a5 a4 a3 a2 a1 a0) = addNatBinAux  (NatBin (1-a7) (1-a6) (1-a5) (1-a4) (1-a3) (1-a2) (1-a1) (1-a0)) (NatBin 0 0 0 0 0 0 0 1)
-
-subNatBin a b = addNatBinAux  a (negNatBin b)
-
-mulNumBit a b
-    | b == 0 = (NatBin 0 0 0 0 0 0 0 0)
-    | otherwise = a
-
-shift (NatBin a7 a6 a5 a4 a3 a2 a1 a0) i 
-    | i == 0 = (NatBin a7 a6 a5 a4 a3 a2 a1 a0)
-    | otherwise = (NatBin a6 a5 a4 a3 a2 a1 a0 0)
-
-multNatBin (NatBin a7 a6 a5 a4 a3 a2 a1 a0) (NatBin b7 b6 b5 b4 b3 b2 b1 b0) =
-    foldr (addNatBinAux) (NatBin 0 0 0 0 0 0 0 0) rows where 
-        rows = map (\(n, bit) ->  shift (mulNumBit (NatBin a7 a6 a5 a4 a3 a2 a1 a0) bit) n ) (zip [0..] [b0,b1,b2,b3,b4,b5,b6,b7])
-
-divNatBin :: Maybe NatBin -> Maybe NatBin -> Maybe NatBin
-divNatBin mx my = do
-  x <- mx
-  y <- my
-  if y == NatBin 0 0 0 0 0 0 0 0
-    then Nothing
-    else Just (fst $ divmodAux x y (NatBin 0 0 0 0 0 0 0 0, x))
-
-modNatBin mx my = do
-    x <- mx
-    y <- my
-    if y == NatBin 0 0 0 0 0 0 0 0
-        then Nothing
-        else Just( snd $ divmodAux x y ((NatBin 0 0 0 0 0 0 0 0), x))
-
-divmodAux x y (p,q)
-    | x < y = (p, q)
-    | otherwise = divmodAux (subNatBin x y) y (addNatBinAux  p (NatBin 0 0 0 0 0 0 0 1), subNatBin x y)
-
-logNatBin Nothing (Div x y) = S (\s -> (Nothing, Just DivByZero))
-logNatBin Nothing (Mod x y) = S (\s -> (Nothing, Just DivByZero))
-logNatBin v _ = S (\s -> (v, s))
-
+{-
 eval (Value x) = S (\s -> (Just x, s))
 eval (Div x y) = do u <- eval x
                     v <- eval y
@@ -185,14 +95,44 @@ eval (Mod x y) = do u <- eval x
 data NatBin = End | Zero NatBin | One NatBin
     deriving (Show, Eq, Ord)
 
-uno = One (Zero (Zero (Zero (Zero (Zero (Zero (Zero End)))))))
+data Expression = Value NatBin 
+                | Add Expression Expression
+                | Sub Expression Expression
+                | Mul Expression Expression
+                | Div Expression Expression
+                | Mod Expression Expression
+                deriving (Show, Eq)
+
+data Maybe' a = Just' a | DivByZero | NegativeNumber | Owerflow
+    deriving (Show, Eq)
+
+instance Functor Maybe' where
+    fmap f DivByZero = DivByZero
+    fmap f NegativeNumber = NegativeNumber
+    fmap f Owerflow = Owerflow
+    fmap f (Just' x) = Just' (f x)
+
+instance Applicative Maybe' where
+    pure x = Just' x
+    DivByZero <*> _ = DivByZero
+    NegativeNumber <*> _ = NegativeNumber
+    Owerflow <*> _ = Owerflow
+    (Just' g) <*> mx = fmap g mx
+
+instance Monad Maybe' where
+    DivByZero >>= _ = DivByZero
+    NegativeNumber >>= _ = NegativeNumber
+    Owerflow >>= _ = Owerflow
+    (Just' x) >>= f = f x
+
 zero = Zero (Zero (Zero (Zero (Zero (Zero (Zero (Zero End)))))))
+uno = One (Zero (Zero (Zero (Zero (Zero (Zero (Zero End)))))))
 due = Zero (One (Zero (Zero (Zero (Zero (Zero (Zero End)))))))
 tre = One (One (Zero (Zero (Zero (Zero (Zero (Zero End)))))))
 quattro = Zero (Zero (One (Zero (Zero (Zero (Zero (Zero End)))))))
 
 addNatBin a b = addBits a b (Zero End) where
-    addBits End End x = x
+    addBits End End x = End
     addBits (Zero a) End (Zero End) = Zero (addBits a End (Zero End))
     addBits (Zero a) End (One End) = One (addBits a End (Zero End))
     addBits (One a) End (Zero End) = One (addBits a End (Zero End))
@@ -228,7 +168,7 @@ multNatBin a b = multNatBinAux a b 0 where
     multNatBinAux _ _ i = End
 
 subNatBin a b = subBits a b (Zero End) where
-    subBits End End x = x
+    subBits End End x = End
     subBits (Zero a) End (Zero End) = Zero (subBits a End (Zero End))
     subBits (Zero a) End (One End) = One (subBits a End (One End))
     subBits (One a) End (Zero End) = One (subBits a End (Zero End))
@@ -260,14 +200,26 @@ minority a b = fst $ minorityAux a b where
     minorityAux (One a) (Zero b) = if flag then (ris, True) else (False, True) where (ris, flag) = minorityAux a b
     minorityAux (Zero a) (One b) = if flag then (ris, True) else (True, True) where (ris, flag) = minorityAux a b
 
-divNatBin a b = fst (divmodAux a b (zero, a))
+divNatBin a b 
+    | b == zero = DivByZero
+    | otherwise = Just' (fst (divmodAux a b (zero, a)))
 
-modNatBin a b = snd (divmodAux a b (zero, a))
+modNatBin a b
+    | b == zero = DivByZero
+    | otherwise = Just' (snd (divmodAux a b (zero, a)))
 
-divmodAux a b (p, q) 
+divmodAux a b (p, q)
     | minority a b = (p,q)
     | otherwise = divmodAux (subNatBin a b) b (addNatBin  p uno, subNatBin a b)
 
+eval (Value x) = Just' x
+eval (Div x y) = do u <- eval x
+                    v <- eval y
+                    divNatBin u v 
+eval (Mod x y) = do u <- eval x
+                    v <- eval y
+                    modNatBin u v 
+
 main :: IO ()
 main = do
-    print $ show $  modNatBin tre due
+    print $ show $ eval (Div (Value quattro) (Mod (Value due) (Value zero)))
