@@ -83,15 +83,6 @@ exT = (Node 5
 -- Eq, Ord, Num, Show.
 
 -- sequenza binaria di 8 bit
-{-
-eval (Value x) = S (\s -> (Just x, s))
-eval (Div x y) = do u <- eval x
-                    v <- eval y
-                    logNatBin (divNatBin u v) (Div x y)
-eval (Mod x y) = do u <- eval x
-                    v <- eval y
-                    logNatBin (modNatBin u v) (Div x y)-}
-
 data NatBin = End | Zero NatBin | One NatBin
     deriving (Show, Eq, Ord)
 
@@ -236,7 +227,12 @@ divmodAux a b (p, q)
         p' <- addNatBin p uno
         divmodAux q' b (p', q')
 
-eval (Value x) = Just' x
+isToLong x = (len x) > 8 where
+    len (Zero a) = 1 + (len a)
+    len (One a) = 1 + (len a)
+    len End = 0
+
+eval (Value x) = if isToLong x then Overflow else Just' x
 eval (Div x y) = do u <- eval x
                     v <- eval y
                     divNatBin u v 
@@ -255,8 +251,9 @@ eval (Add x y) = do u <- eval x
 
 main :: IO ()
 main = do
+    --print $ show $ eval (Value (Zero (One (Zero (Zero (Zero (Zero (Zero (Zero End)))))))))
     --print $ show $ addNatBin troppo troppo
     --print $ show $ eval (Mul (Value quattro) (Value due))
     --print $ show $ eval (Add (Value quattro) (Value due))
     --print $ show $ eval (Mul (Value quattro) (Value due))
-    print $ show $ eval (Div (Value quattro) (Add (Value troppo) (Value troppo)))
+    --print $ show $ eval (Div (Value quattro) (Add (Value troppo) (Value troppo)))
