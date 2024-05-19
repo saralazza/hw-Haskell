@@ -1,5 +1,4 @@
 import Data.Char (toUpper)
-import Control.Monad.State
 import Control.Applicative
 
 -- Esercizio 1: Definite un’azione charCount :: IO () che legge un numero n da tastiera, poi n stringhe e alla fine stampa il numero di stringhe in cui appare ciascuna lettera.
@@ -42,33 +41,45 @@ getStrings n
 data BinTree a = Node a (BinTree a) (BinTree a) | Empty
     deriving (Show)
 
-type NodeListState a = State (a, a) [a]
+newtype ST s a = S { runState :: s -> (a, s) }
 
-nodiEquilibratiAux :: (Num a, Eq a, Show a) => BinTree a -> NodeListState a
-nodiEquilibratiAux Empty = return []
-nodiEquilibratiAux (Node x sx dx) = do
-    (currentCammino, currentSottoalbero) <- get 
-    put (currentCammino + x, currentSottoalbero) 
-    sxList <- nodiEquilibratiAux sx 
-    sxSottoalbero <- gets snd 
-    put (currentCammino + x, currentSottoalbero) 
-    dxList <- nodiEquilibratiAux dx
-    dxSottoalbero <- gets snd 
-    put (currentCammino + x, sxSottoalbero + dxSottoalbero + x) 
-    return (if currentCammino == (sxSottoalbero + dxSottoalbero + x) then x : sxList ++ dxList else sxList ++ dxList)
+instance Functor (ST s) where
+  fmap f (S g) = S (\s -> let (a, s') = g s in (f a, s'))
+  
+instance Applicative (ST s) where
+  pure a = S (\s -> (a, s))
+  stf <*> stg = S (\s -> let (h, s') = runST stf s; (a, s'') = runST stg s' in (h a, s''))
 
-nodiEquilibrati tree = fst $ runState (nodiEquilibratiAux tree) (0,0)
+instance Monad (ST s) where
+  return = pure
+  (S g) >>= f = S (\s -> let (a, s') = g s; S h = f a in h s')
 
-exT = (Node 5
-        (Node 3
-            (Node 2 Empty Empty) 
-            Empty
-        )
-        (Node 1
-            (Node 4 Empty Empty)
-            Empty
-        )
-    )
+runST (S st) = st
+
+evalState st s = fst (runST st s)
+
+fresh1 val = S (\(n1, n2) -> (n1, (n1 + val, n2)))
+append val = S (\(n1, n2) -> (n1, (n1, val : n2)))
+updateSub val = S (\(n1, n2) -> (val + sum (take 2 n2), (n1 - val, val + sum (take 2 n2) : (drop 2 n2))))
+
+balancedNodesM b = evalState (balancedNodesMAux b) (0, [])
+    where
+        balancedNodesMAux Empty = do _ <- append 0
+                                     return []
+        balancedNodesMAux (Node val left right) = do n <- fresh1 val
+                                                     lres <- balancedNodesMAux left
+                                                     rres <- balancedNodesMAux right
+                                                     totSubSum <- updateSub val
+                                                     return ((if n == totSubSum then (val:) else id) lres ++ rres)
+
+balancedNodesA b = evalState (balancedNodesAAux b) (0, [])
+    where
+        balancedNodesAAux Empty = append 0 *> pure []
+        balancedNodesAAux (Node val left right) = (\n lres rres totSubSum -> (if n == totSubSum then (val:) else id) lres ++ rres)
+                                                  <$> fresh1 val
+                                                  <*> balancedNodesAAux left
+                                                  <*> balancedNodesAAux right
+                                                  <*> updateSub val
 
 -- Esercizio 3: Definire il tipo NatBin che rappresenta i numeri naturali come sequenze binarie. Potete 
 -- definirlo come liste (di lunghezza fissata) di 0 e 1, oppure potete dare una definizione con data 
@@ -250,7 +261,8 @@ eval (Add x y) = do u <- eval x
                     addNatBin u v
 
 main :: IO ()
-main = do
+main = do 
+    putStrLn $ show $ balancedNodesM (Node 1 (Node 7 (Node 5 (Node 1 Empty Empty) (Node 1 Empty (Node 1 Empty Empty))) Empty) (Node 3 (Node 2 (Node 1 Empty Empty) (Node 1 Empty Empty)) Empty))
     --print $ show $ eval (Value (Zero (One (Zero (Zero (Zero (Zero (Zero (Zero End)))))))))
     --print $ show $ addNatBin troppo troppo
     --print $ show $ eval (Mul (Value quattro) (Value due))
