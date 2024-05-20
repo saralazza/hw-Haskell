@@ -21,6 +21,7 @@ count x (s:ss)
     | (elem x s) || (elem (toUpper x) s)= 1 + count x ss
     | otherwise = count x ss
 
+-- Stampo solo le lettere delle parole inserite
 countOccurrences strings = do
     occurrences <- mapM (\x -> return (x, count x strings)) ['a'..'z']
     return (filter (\(_, y) -> y /= 0) occurrences)
