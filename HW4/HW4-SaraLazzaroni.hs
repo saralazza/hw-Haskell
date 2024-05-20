@@ -96,7 +96,22 @@ balancedNodesA b = evalState (balancedNodesAAux b) (0, [])
 
 -- sequenza binaria di 8 bit
 data NatBin = End | Zero NatBin | One NatBin
-    deriving (Show, Eq, Ord)
+    deriving (Show, Eq)
+
+instance Ord NatBin where
+    a <= b = (a == b) || (fst $ minorityAux a b) where
+        minorityAux (Zero a) End = (False, False)
+        minorityAux (One a) End = (True, True)
+        minorityAux End (Zero b) = (False, False)
+        minorityAux End (One b) = (True, True)
+        minorityAux (Zero End) (One End) = (True, True)
+        minorityAux (One End) (Zero End) = (False, True)
+        minorityAux (Zero End) (Zero End) = (False, False)
+        minorityAux (One End) (One End) = (False, False)
+        minorityAux (Zero a) (Zero b) = if flag then (ris, True) else (ris, False) where (ris, flag) = minorityAux a b
+        minorityAux (One a) (One b) = if flag then (ris, True) else (ris, False) where (ris, flag) = minorityAux a b
+        minorityAux (One a) (Zero b) = if flag then (ris, True) else (False, True) where (ris, flag) = minorityAux a b
+        minorityAux (Zero a) (One b) = if flag then (ris, True) else (True, True) where (ris, flag) = minorityAux a b
 
 data Expression = Value NatBin 
                 | Add Expression Expression
@@ -185,7 +200,7 @@ multNatBin a b = multNatBinAux a b 0 where
     multNatBinAux _ _ _ = Just' End
 
 subNatBin a b 
-    | minority a b = NegativeNumber
+    | a < b = NegativeNumber
     |otherwise = Just' (subBits a b (Zero End)) 
     where
         subBits End End x = End
@@ -206,19 +221,6 @@ subNatBin a b
         subBits (One a) (One b) (Zero End) = Zero (subBits a b (Zero End))
         subBits (One a) (One b) (One End) = One (subBits a b (One End))
 
-minority a b = fst $ minorityAux a b where
-    minorityAux (Zero a) End = (False, False)
-    minorityAux (One a) End = (True, True)
-    minorityAux End (Zero b) = (False, False)
-    minorityAux End (One b) = (True, True)
-    minorityAux (Zero End) (One End) = (True, True)
-    minorityAux (One End) (Zero End) = (False, True)
-    minorityAux (Zero End) (Zero End) = (False, False)
-    minorityAux (One End) (One End) = (False, False)
-    minorityAux (Zero a) (Zero b) = if flag then (ris, True) else (ris, False) where (ris, flag) = minorityAux a b
-    minorityAux (One a) (One b) = if flag then (ris, True) else (ris, False) where (ris, flag) = minorityAux a b
-    minorityAux (One a) (Zero b) = if flag then (ris, True) else (False, True) where (ris, flag) = minorityAux a b
-    minorityAux (Zero a) (One b) = if flag then (ris, True) else (True, True) where (ris, flag) = minorityAux a b
 
 divNatBin a b 
     | b == zero = DivByZero
@@ -233,18 +235,18 @@ modNatBin a b
         Just' (snd ris)
 
 divmodAux a b (p, q)
-    | minority a b = Just' (p,q)
+    | a < b = Just' (p,q)
     | otherwise = do
         q' <- subNatBin q b
         p' <- addNatBin p uno
         divmodAux q' b (p', q')
 
-isToLong x = (len x) > 8 where
+isTooLong x = (len x) > 8 where
     len (Zero a) = 1 + (len a)
     len (One a) = 1 + (len a)
     len End = 0
 
-eval (Value x) = if isToLong x then Overflow else Just' x
+eval (Value x) = if isTooLong x then Overflow else Just' x
 eval (Div x y) = do u <- eval x
                     v <- eval y
                     divNatBin u v 
@@ -263,10 +265,10 @@ eval (Add x y) = do u <- eval x
 
 main :: IO ()
 main = do 
-    putStrLn $ show $ balancedNodesM (Node 1 (Node 7 (Node 5 (Node 1 Empty Empty) (Node 1 Empty (Node 1 Empty Empty))) Empty) (Node 3 (Node 2 (Node 1 Empty Empty) (Node 1 Empty Empty)) Empty))
+    --putStrLn $ show $ balancedNodesM (Node 1 (Node 7 (Node 5 (Node 1 Empty Empty) (Node 1 Empty (Node 1 Empty Empty))) Empty) (Node 3 (Node 2 (Node 1 Empty Empty) (Node 1 Empty Empty)) Empty))
     --print $ show $ eval (Value (Zero (One (Zero (Zero (Zero (Zero (Zero (Zero End)))))))))
     --print $ show $ addNatBin troppo troppo
     --print $ show $ eval (Mul (Value quattro) (Value due))
     --print $ show $ eval (Add (Value quattro) (Value due))
     --print $ show $ eval (Mul (Value quattro) (Value due))
-    --print $ show $ eval (Div (Value quattro) (Add (Value troppo) (Value troppo)))
+    print $ show $ eval (Div (Value quattro) (Value due))
