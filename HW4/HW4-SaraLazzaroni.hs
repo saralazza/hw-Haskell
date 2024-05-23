@@ -24,7 +24,7 @@ count x (s:ss)
 -- Stampo solo le lettere delle parole inserite
 countOccurrences strings = do
     occurrences <- mapM (\x -> return (x, count x strings)) ['a'..'z']
-    return (filter (\(_, y) -> y /= 0) occurrences)
+    return occurrences
 
 getStrings n 
     | n <= 0 = return []
@@ -301,11 +301,6 @@ eval (Add x y) = do u <- eval x
                     addNatBin u v
 
 main :: IO ()
-main = do 
-    --putStrLn $ show $ balancedNodesM (Node 1 (Node 7 (Node 5 (Node 1 Empty Empty) (Node 1 Empty (Node 1 Empty Empty))) Empty) (Node 3 (Node 2 (Node 1 Empty Empty) (Node 1 Empty Empty)) Empty))
-    --print $ show $ eval (Value (Zero (One (Zero (Zero (Zero (Zero (Zero (Zero End)))))))))
-    --print $ show $ addNatBin troppo troppo
-    --print $ show $ eval (Mul (Value quattro) (Value due))
-    --print $ show $ eval (Add (Value quattro) (Value due))
-    --print $ show $ eval (Mul (Value quattro) (Value due))
-    print $ show $ eval (Div (Value quattro) (Value due))
+main = do
+    let ris = "HW-SaraLazzaroni (1983548)"
+    print ris
