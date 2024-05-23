@@ -59,28 +59,65 @@ runST (S st) = st
 
 evalState st s = fst (runST st s)
 
-fresh1 val = S (\(n1, n2) -> (n1, (n1 + val, n2)))
+-- Inizialmente la soluzione dell'esercizio era stata implementata nel seguente modo:
+--  0. lo stato rappresentava (sumPath, sumSubtree) del nodo val.
+--  1. prendo lo stato corrente (sumPath, sumSubtree) con get e lo salvo in una variabile.
+--  2. aggiorno il path andando a salvare (sumPath + val, sumSubtree) prima della ricorsione sinistra
+--  3. faccio la ricorsione sinistra che ritorna la propria lista di nodi bilanciati bsx e mi salvo i 
+--      valori dello stato aggiornato (sumPathSx, sumSubtreeSx)
+--  4. setto il valore (sumPath + val, sumSubtree) prima di fare la ricorsione destra
+--  5. faccio la ricorsione destra che ritorna la propria lista di nodi bilanciati bdx e prendo i valori 
+--      dello stato aggiornato (sumPathDx, sumSubtreeDx)
+--  6. stabilisco se questo nodo è bilanciato ed in caso affermativo ritrono val:bsx++bdx altrimenti bsx++bdx
+-- Il problema con questa soluzione è che ci sono troppe dipendenze tra ciò che viene fatto prima della
+-- ricorsione e quello che viene fatto dopo, cioè devono essere salvati troppi valori come sumSubtreeSx o path.
+-- Queste dipendenze rappresentano un problema se si vuole implementare la soluzione con Applicative.
+-- Mentre tutte le altre dipendeze posso essere risolte utilizzando dei calcoli, comme sommare e 
+-- poi sottrare il valore val, l'unica dipendeza che non si può togliere è quella di sumSubtreeSx. Quindi
+-- è necessario andare ad implementare un'altra soluzione meno intuitiva ma facilmente implementabile con
+-- Applicative. 
+
+-- Idea: Invece che salvarci nello stato la somma dei sottoalberi, possiamo usare una lista in cui salviamo
+-- la somma dei sottoalberi che calcoliamo. Se mi trovo sul Nodo val sx dx, allora dopo aver concluso le 
+-- ricorsioni sinistra e destra, i valori della somma dei sottoalberi sx e dx saranno proprio i primi due
+-- elementi della lista. Quindi prendo questi primi due valori e li utilizzo per verificare se il nodo è
+-- bilanciato, e lascio inviariata il resto della lista. In questo modo, non ci sono dipendenze tra ciò
+-- che accade tra la ricorsione sinistra e destra ed è possibile implementare la soluzione con Applicative.
+
+-- La funzione updatePath serve per aggiornare il valore del path prima di fare ricorsione sinistra e destra. 
+-- Quindi updatePath restituirà come valore di ritorno il path corrente che sarà poi usato per decidere 
+-- se il nodo è bilanciato o meno e aggiornerà lo stato corrente con n1+val.
+updatePath val = S (\(n1, n2) -> (n1, (n1 + val, n2)))
+
+-- La funzione append serve per andare ad aggiungere 0 in resta alla lista delle somme dei sottoalberi quando
+-- mi trovo nel caso base. In questo caso non mi interessa il valore di ritorno.
 append val = S (\(n1, n2) -> (n1, (n1, val : n2)))
-updateSub val = S (\(n1, n2) -> (val + sum (take 2 n2), (n1 - val, val + sum (take 2 n2) : (drop 2 n2))))
+
+-- La funzione updateSumSubtree restituisce come valore la somma del sumSubtreesx + sumSubtreedx + val in cui 
+-- sumSubtreeSx e sumSubtreedx sono i primi due elementi della lista delle somme dei sottolaberi. Inoltre
+-- aggiornato lo stato andando a sottrarre dal path val in modo da riportare il valore della somma del cammino
+-- a quella corrente e aggiunge la somma totale del sottoalbero del nodo corrente (sumSubtreesx + 
+-- sumSubtreedx + val) alla lista dove ho tolto i primi due elementi.
+updateSumSubtree val = S (\(n1, n2) -> (val + sum (take 2 n2), (n1 - val, val + sum (take 2 n2) : (drop 2 n2))))
 
 balancedNodesM b = evalState (balancedNodesMAux b) (0, [])
     where
         balancedNodesMAux Empty = do _ <- append 0
                                      return []
-        balancedNodesMAux (Node val left right) = do n <- fresh1 val
+        balancedNodesMAux (Node val left right) = do n <- updatePath val
                                                      lres <- balancedNodesMAux left
                                                      rres <- balancedNodesMAux right
-                                                     totSubSum <- updateSub val
+                                                     totSubSum <- updateSumSubtree val
                                                      return ((if n == totSubSum then (val:) else id) lres ++ rres)
 
 balancedNodesA b = evalState (balancedNodesAAux b) (0, [])
     where
         balancedNodesAAux Empty = append 0 *> pure []
         balancedNodesAAux (Node val left right) = (\n lres rres totSubSum -> (if n == totSubSum then (val:) else id) lres ++ rres)
-                                                  <$> fresh1 val
+                                                  <$> updatePath val
                                                   <*> balancedNodesAAux left
                                                   <*> balancedNodesAAux right
-                                                  <*> updateSub val
+                                                  <*> updateSumSubtree val
 
 -- Esercizio 3: Definire il tipo NatBin che rappresenta i numeri naturali come sequenze binarie. Potete 
 -- definirlo come liste (di lunghezza fissata) di 0 e 1, oppure potete dare una definizione con data 
@@ -99,19 +136,19 @@ data NatBin = End | Zero NatBin | One NatBin
     deriving (Show, Eq)
 
 instance Ord NatBin where
-    a <= b = (a == b) || (fst $ minorityAux a b) where
-        minorityAux (Zero a) End = (False, False)
-        minorityAux (One a) End = (True, True)
-        minorityAux End (Zero b) = (False, False)
-        minorityAux End (One b) = (True, True)
-        minorityAux (Zero End) (One End) = (True, True)
-        minorityAux (One End) (Zero End) = (False, True)
-        minorityAux (Zero End) (Zero End) = (False, False)
-        minorityAux (One End) (One End) = (False, False)
-        minorityAux (Zero a) (Zero b) = if flag then (ris, True) else (ris, False) where (ris, flag) = minorityAux a b
-        minorityAux (One a) (One b) = if flag then (ris, True) else (ris, False) where (ris, flag) = minorityAux a b
-        minorityAux (One a) (Zero b) = if flag then (ris, True) else (False, True) where (ris, flag) = minorityAux a b
-        minorityAux (Zero a) (One b) = if flag then (ris, True) else (True, True) where (ris, flag) = minorityAux a b
+    a <= b = (a == b) || (fst $ minAux a b) where
+        minAux (Zero a) End = (False, False)
+        minAux (One a) End = (True, True)
+        minAux End (Zero b) = (False, False)
+        minAux End (One b) = (True, True)
+        minAux (Zero End) (One End) = (True, True)
+        minAux (One End) (Zero End) = (False, True)
+        minAux (Zero End) (Zero End) = (False, False)
+        minAux (One End) (One End) = (False, False)
+        minAux (Zero a) (Zero b) = if flag then (ris, True) else (ris, False) where (ris, flag) = minAux a b
+        minAux (One a) (One b) = if flag then (ris, True) else (ris, False) where (ris, flag) = minAux a b
+        minAux (One a) (Zero b) = if flag then (ris, True) else (False, True) where (ris, flag) = minAux a b
+        minAux (Zero a) (One b) = if flag then (ris, True) else (True, True) where (ris, flag) = minAux a b
 
 data Expression = Value NatBin 
                 | Add Expression Expression
